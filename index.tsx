@@ -2,622 +2,683 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { 
-  Flame, Search, Activity, BarChart3, MessageSquare, Zap, 
-  ChevronRight, RefreshCcw, ExternalLink, Target, Trophy, 
-  AlertTriangle, Info, Calendar, Save, Download, FileSpreadsheet,
-  ArrowUpRight, ArrowDownRight, TrendingUp, ShieldCheck, 
-  Crosshair, BrainCircuit, Sparkles, Globe, Link as LinkIcon,
-  ChevronDown, PenTool, GitCompare, X, Skull, TrendingDown,
-  Layers, Radio, Gauge, Share2
+  Flame, Zap, BarChart3, Target, Trophy, PenTool, BrainCircuit, 
+  Sparkles, Globe, Link as LinkIcon, History, ShieldCheck, 
+  TrendingUp, TrendingDown, Layers, Radio, Gauge, ExternalLink, 
+  Activity, ArrowUpRight, Scale, Monitor, Save, RefreshCcw,
+  ArrowUp, ArrowDown, Ghost, AlertTriangle, Fingerprint, Coins, Star, Crosshair,
+  SearchCode, ShieldAlert, ThermometerSun, ZapOff, Wand2, Bot, DatabaseZap,
+  LayoutDashboard, ChevronRight, Info, FileText, ClipboardList, CheckCircle2,
+  Upload, X, FileUp, FileSearch, Calendar, Timer
 } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
-import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
-  ResponsiveContainer, BarChart, Bar, Cell, Legend
-} from 'recharts';
-import html2canvas from 'html2canvas';
+import { GoogleGenAI, Type } from "@google/genai";
 
 // --- Types & Constants ---
-const STORAGE_KEY = 'dragon_faith_reviews_v23';
+const STORAGE_KEY = 'dragon_faith_system_v27_5';
 
-interface LadderData {
-  count: number;
-  concept?: string;
-  stock?: string;
-  promoRate?: number; // 晋级率
+interface IndexData {
+  name: string;
+  change: number;
+  ma5Status: 'above' | 'below';
+}
+
+interface SectorTrack {
+  name: string;
+  gain: number;
+  limitUps: number;
+  volume: number; 
+}
+
+interface WatchStock {
+  name: string;
+  concept: string;
+  plan: string;
+}
+
+interface GroundingSource {
+  title: string;
+  uri: string;
+}
+
+interface UploadedFile {
+  name: string;
+  mimeType: string;
+  data: string; // base64
+  preview?: string;
 }
 
 interface MarketReview {
   date: string;
-  auUp: number;
-  auDn: number;
-  prem: string; 
-  trend: string; 
-  vol: string;
-  vDelta: string;
+  indices: IndexData[];
+  totalVol: number;
+  volDelta: number;
+  volMA5: 'increasing' | 'decreasing';
   upCount: number;
   dnCount: number;
-  lUp: number;
-  lDn: number;
+  topSectors: SectorTrack[];
+  isMainLine: 'confirmed' | 'rotating' | 'random';
+  ladder: Record<string, { count: number; stock: string; concept: string; promoRate: number }>;
+  limitUpTotal: number;
+  limitDownTotal: number;
   brokenRate: number;
-  promotionRate: number;
-  yesterdayGain: number; 
-  nuclearCount: number;  
-  mainSectorSentiment: string; // 主线板块情绪
-  sectors: { name: string; count: number }[];
-  limitDownSector: { name: string; count: number };
-  ladder: Record<string, LadderData>;
-  highBoard: string;
+  yesterdayGain: number;
+  nuclearCount: number;
   dragon: string;
-  dragonStatus: string;
+  dragonStatus: 'accelerate' | 'divergence' | 'broken' | 'revive';
   midArmy: string;
-  midStatus: string;
-  subLeader: string;
-  filler: string;
+  watchlist: WatchStock[];
   reflection: string;
   score: number;
   stage: string;
   aiAnalysis: string;
+  sources: GroundingSource[];
+  rawContext?: string;
 }
 
 const INITIAL_REVIEW: MarketReview = {
   date: new Date().toISOString().split('T')[0],
-  auUp: 0, auDn: 0, prem: 'normal',
-  trend: 'normal', vol: '', vDelta: '', upCount: 0, dnCount: 0,
-  lUp: 0, lDn: 0, brokenRate: 0, promotionRate: 0,
-  yesterdayGain: 0,
-  nuclearCount: 0,
-  mainSectorSentiment: '--', 
-  sectors: [{ name: '', count: 0 }, { name: '', count: 0 }, { name: '', count: 0 }],
-  limitDownSector: { name: '', count: 0 },
+  indices: [
+    { name: '沪', change: 0, ma5Status: 'above' },
+    { name: '深', change: 0, ma5Status: 'above' },
+    { name: '创', change: 0, ma5Status: 'above' },
+    { name: '科', change: 0, ma5Status: 'above' },
+    { name: '300', change: 0, ma5Status: 'above' },
+    { name: '1000', change: 0, ma5Status: 'above' },
+    { name: '2000', change: 0, ma5Status: 'above' },
+    { name: '微盘', change: 0, ma5Status: 'above' },
+  ],
+  totalVol: 0, volDelta: 0, volMA5: 'increasing',
+  upCount: 0, dnCount: 0,
+  topSectors: Array(3).fill({ name: '', gain: 0, limitUps: 0, volume: 0 }),
+  isMainLine: 'confirmed',
   ladder: {
-    '5': { count: 0, concept: '', stock: '', promoRate: 0 },
-    '4': { count: 0, concept: '', stock: '', promoRate: 0 },
-    '3': { count: 0, concept: '', stock: '', promoRate: 0 },
-    '2': { count: 0, concept: '', stock: '', promoRate: 0 },
-    '1': { count: 0, concept: '', stock: '', promoRate: 0 },
+    '5': { count: 0, stock: '', concept: '', promoRate: 0 },
+    '4': { count: 0, stock: '', concept: '', promoRate: 0 },
+    '3': { count: 0, stock: '', concept: '', promoRate: 0 },
+    '2': { count: 0, stock: '', concept: '', promoRate: 0 },
+    '1': { count: 0, stock: '', concept: '', promoRate: 0 },
   },
-  highBoard: '',
-  dragon: '', dragonStatus: 'broken',
-  midArmy: '', midStatus: 'trend_up',
-  subLeader: '', filler: '',
-  reflection: '',
-  score: 0,
-  stage: '--',
-  aiAnalysis: ''
+  limitUpTotal: 0, limitDownTotal: 0,
+  brokenRate: 0, yesterdayGain: 0, nuclearCount: 0,
+  dragon: '', dragonStatus: 'accelerate', midArmy: '',
+  watchlist: Array(9).fill({ name: '', concept: '', plan: '' }),
+  reflection: '', score: 50, stage: '混沌期', aiAnalysis: '',
+  sources: [],
 };
-
-const calculateScore = (d: MarketReview) => {
-  let score = 50;
-  if (d.trend === 'v_reversal') score += 20;
-  if (d.trend === 'a_drop') score -= 25; 
-  if (d.yesterdayGain > 5) score += 15;
-  if (d.yesterdayGain < -2) score -= 20;
-  if (d.nuclearCount > 10) score -= 15;
-  if (d.lUp > 80) score += 10;
-  if (d.lUp < 20) score -= 10;
-  if (d.lDn > 15) score -= 20;
-  if (d.promotionRate > 50) score += 10;
-  
-  const finalScore = Math.max(0, Math.min(100, score));
-  let stage = '震荡/修复';
-  if (finalScore >= 80) stage = '高潮/分歧预警';
-  else if (finalScore <= 35) stage = '冰点/恐慌退潮';
-  else if (finalScore > 35 && finalScore < 50 && d.yesterdayGain > 0) stage = '回暖初期';
-  
-  return { score: finalScore, stage };
-};
-
-interface GroundingSource {
-  web?: { uri: string; title: string };
-  maps?: { uri: string; title: string };
-}
 
 const App = () => {
   const [review, setReview] = useState<MarketReview>(INITIAL_REVIEW);
   const [history, setHistory] = useState<MarketReview[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
-  const [sources, setSources] = useState<GroundingSource[]>([]);
-  const [compareDate, setCompareDate] = useState<string>("");
-  const captureRef = useRef<HTMLDivElement>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [showFileManager, setShowFileManager] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved) as MarketReview[];
-        setHistory(parsed);
-        const today = parsed.find(r => r.date === INITIAL_REVIEW.date);
-        if (today) setReview(today);
-      }
-    } catch (e) {
-      console.error("Failed to load storage", e);
-    }
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) setHistory(JSON.parse(saved));
   }, []);
 
-  const historyData = useMemo(() => {
-    return [...history].reverse().slice(-7);
-  }, [history]);
+  // 核心逻辑：计算过去 5 日重复出现的主线
+  const persistentSectors = useMemo(() => {
+    const last5 = history.slice(0, 5);
+    const currentSectors = review.topSectors.map(s => s.name.trim()).filter(Boolean);
+    const historicalSectors = last5.flatMap(h => h.topSectors.map(s => s.name.trim()).filter(Boolean));
+    
+    const allSectors = [...currentSectors, ...historicalSectors];
+    const counts: Record<string, number> = {};
+    allSectors.forEach(name => {
+      counts[name] = (counts[name] || 0) + 1;
+    });
 
-  const handleSave = () => {
-    const { score, stage } = calculateScore(review);
-    const updated = { ...review, score, stage };
-    const newHistory = [updated, ...history.filter(h => h.date !== updated.date)].sort((a,b) => b.date.localeCompare(a.date));
-    setHistory(newHistory);
-    setReview(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newHistory));
-    alert("数据已同步至终端。");
+    return Object.entries(counts)
+      .filter(([name, count]) => count >= 2)
+      .sort((a, b) => b[1] - a[1]);
+  }, [history, review.topSectors]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newFiles: UploadedFile[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const base64 = await fileToBase64(file);
+      newFiles.push({
+        name: file.name,
+        mimeType: file.type,
+        data: base64,
+        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
+      });
+    }
+    setUploadedFiles(prev => [...prev, ...newFiles].slice(-10));
   };
 
-  const fetchTodayData = async () => {
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result?.toString().split(',')[1] || '');
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSave = () => {
+    const updated = { ...review };
+    const newHistory = [updated, ...history.filter(h => h.date !== updated.date)].sort((a,b) => b.date.localeCompare(a.date));
+    setHistory(newHistory);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newHistory));
+    alert(`${review.date} 信仰记录已归档。`);
+  };
+
+  const updateWatchlist = (index: number, field: keyof WatchStock, value: string) => {
+    const nw = [...review.watchlist];
+    nw[index] = { ...nw[index], [field]: value };
+    setReview({ ...review, watchlist: nw });
+  };
+
+  const autoFillMarketData = async () => {
     if (isLoading) return;
+    if (uploadedFiles.length === 0) {
+      alert("请先上传数据信源。");
+      return;
+    }
     setIsLoading(true);
-    setStatusMsg("正在检索收盘核心微观情报 (包含溢价与核按钮数据)...");
+    setStatusMsg(`正在深度分析上传的 ${uploadedFiles.length} 个文件并合成市场数据...`);
     
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const prompt = `
-        搜索分析 A 股 ${review.date} 的收盘情绪指标。
+      const parts: any[] = [];
+      parts.push({
+        text: `你是一个精通A股短线博弈的数据专家。现在是 ${review.date}。
+        请【务必以我上传的文件内容作为唯一真相】进行解析填充。
         
-        [DATA_BLOCK]
-        UP/DOWN: 上涨家数/下跌家数
-        LIMIT_U/D: 涨停(非ST)/跌停家数
-        BROKEN_RATE: 炸板率 %
-        PROMO_RATE: 连板晋级率 %
-        YEST_GAIN: 昨日涨停股今日平均收益溢价 %
-        NUCLEAR: 今日跌幅超7%或天地板的家数
-        VOL: 成交额(万亿)
-        DRAGON: 核心龙头(高度/地位)
-        LADDER_PROMO: 5板晋级率, 4板晋级率, 3板晋级率, 2板晋级率
-        [/DATA_BLOCK]
-        
-        基于龙头信仰逻辑，给出今日的情绪周期定义。
-      `;
+        解析要求：
+        1. 提取各指数精确涨跌幅、成交额及增减。
+        2. 提取涨停数、跌停数、炸板率。
+        3. 识别前三主线板块及其详细数据。
+        4. 识别连板梯队（1-5B及以上）的具体标的、家数和晋级率。最高统计到5B+。
+        5. 锁定核心总龙头和趋势中军。
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt,
-        config: { tools: [{ googleSearch: {} }] }
+        返回 JSON 格式：
+        {
+          "indices": {"沪": 涨跌%, "深": %, ...},
+          "totalVol": 数值, "volDelta": 数值,
+          "sentiment": {"limitUp": 数量, "limitDown": 数量, "brokenRate": %},
+          "sectors": [{"name": "板块名", "gain": %, "limitUps": 数量, "volume": 亿}, ...],
+          "dragon": "总龙头名称", "midArmy": "趋势中军名称",
+          "ladder": {"5": {"stock": "股名", "count": 数量, "promoRate": %}, ...}
+        }`
+      });
+      uploadedFiles.forEach(file => {
+        parts.push({ inlineData: { mimeType: file.mimeType, data: file.data } });
       });
 
-      const text = response.text || "";
-      const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
-      if (chunks) {
-        setSources(chunks as GroundingSource[]);
-      }
+      const response = await ai.models.generateContent({
+        model: "gemini-3-pro-preview",
+        contents: { parts },
+        config: { responseMimeType: "application/json" }
+      });
 
-      const match = text.match(/\[DATA_BLOCK\]([\s\S]*?)\[\/DATA_BLOCK\]/);
+      const data = JSON.parse(response.text || "{}");
       
-      if (match) {
-        const dataStr = match[1];
-        const lines = dataStr.split('\n').map(l => l.trim()).filter(l => l);
-        const parsed: any = {};
-        lines.forEach(line => {
-          const [key, val] = line.split(':').map(s => s.trim());
-          parsed[key] = val;
-        });
-
-        const newReview = { ...review };
-        if (parsed['UP/DOWN']) {
-          const [u, d] = parsed['UP/DOWN'].split('/').map((n:string) => parseInt(n));
-          newReview.upCount = u; newReview.dnCount = d;
+      setReview((prev): MarketReview => {
+        const newIndices: IndexData[] = prev.indices.map(idx => ({
+          ...idx,
+          change: data.indices?.[idx.name] ?? idx.change,
+          ma5Status: ((data.indices?.[idx.name] ?? 0) >= 0 ? 'above' : 'below') as 'above' | 'below'
+        }));
+        const newSectors = prev.topSectors.map((s, i) => data.sectors?.[i] ? { ...data.sectors[i] } : s);
+        const newLadder = { ...prev.ladder };
+        if (data.ladder) {
+          Object.keys(data.ladder).forEach(lvl => {
+            if (newLadder[lvl]) newLadder[lvl] = { ...newLadder[lvl], ...data.ladder[lvl] };
+          });
         }
-        if (parsed.YEST_GAIN) newReview.yesterdayGain = parseFloat(parsed.YEST_GAIN);
-        if (parsed.NUCLEAR) newReview.nuclearCount = parseInt(parsed.NUCLEAR);
-        if (parsed['LIMIT_U/D']) {
-           const [u, d] = parsed['LIMIT_U/D'].split('/').map((n:string) => parseInt(n));
-           newReview.lUp = u; newReview.lDn = d;
-        }
-
-        const { score, stage } = calculateScore(newReview);
-        newReview.score = score;
-        newReview.stage = stage;
-        newReview.aiAnalysis = text.replace(/\[DATA_BLOCK\][\s\S]*?\[\/DATA_BLOCK\]/, "").trim();
-        setReview(newReview);
-      }
+        return {
+          ...prev,
+          indices: newIndices,
+          totalVol: data.totalVol ?? prev.totalVol,
+          volDelta: data.volDelta ?? prev.volDelta,
+          limitUpTotal: data.sentiment?.limitUp ?? prev.limitUpTotal,
+          limitDownTotal: data.sentiment?.limitDown ?? prev.limitDownTotal,
+          brokenRate: data.sentiment?.brokenRate ?? prev.brokenRate,
+          topSectors: newSectors,
+          ladder: newLadder,
+          dragon: data.dragon ?? prev.dragon,
+          midArmy: data.midArmy ?? prev.midArmy,
+          aiAnalysis: `【解析成功】基于 ${uploadedFiles.length} 个原始信源提炼。已聚焦 1-5B+ 核心梯队。`
+        };
+      });
+      setShowFileManager(false);
     } catch (e) {
-      console.error(e);
-      alert("搜索失败，请手动录入。");
+      alert("AI 深度解析异常。");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const callAI = async (mode: 'full' | 'polish' | 'limitDown' | 'ladderAnalysis' | 'sectorInterlinkage' = 'full', level?: string) => {
+  const callAI = async (target?: { type: 'stock' | 'sentiment' | 'optimization', name?: string, role?: string }) => {
     if (isLoading) return;
     setIsLoading(true);
-    
-    const messages = {
-      full: "正在进行深度信仰研判...",
-      polish: "正在优化操盘反思...",
-      limitDown: "正在通过风险雷达穿透跌停原因...",
-      ladderAnalysis: `正在深度解析 ${level} 板梯队晋级逻辑...`,
-      sectorInterlinkage: "正在穿透主线板块间的联动与虹吸博弈..."
-    };
-    
-    setStatusMsg(messages[mode]);
-    setSources([]);
-    
+    setStatusMsg("正在调动 AI 指挥官进行全维度信仰研判...");
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      let prompt = "";
       
-      if (mode === 'full') {
-        prompt = `
-          你是一位精通《龙头信仰》的游资教练。
-          当前数据：溢价 ${review.yesterdayGain}%，核按钮 ${review.nuclearCount}家，连板涨停 ${review.lUp}，跌停 ${review.lDn}。
-          
-          研判要求：
-          1. 核心矛盾：赚钱效应与亏钱效应是否背离？
-          2. 周期定位：是“混沌期”、“主升期”还是“退潮期”？
-          3. 信仰博弈：总龙目前的封板力度和明日预期。
-          4. 请额外给出一个 [MAIN_SENTIMENT]活跃/分化/退潮[/MAIN_SENTIMENT] 标签，用于标记当前最活跃主线板块的情绪状态。
-        `;
-      } else if (mode === 'polish') {
-        prompt = `
-          重写反思：${review.reflection}
-          要求：使用游资语录风格，强调对周期的尊重。
-        `;
-      } else if (mode === 'limitDown') {
-        prompt = `
-          任务：深度分析今日 A 股市场跌停家数（当前：${review.lDn}家）背后的根本原因与情绪杀伤力。
-          1. 检索今日跌停板个股名单（含非ST与ST），并精准识别其中的“核按钮”标的（天地板、大高开低走）以及“趋势中军”（大市值容量标的）的破位情况。
-          2. 判别成因：是个股利空、板块主线崩溃（瓦解）、还是系统性流动性衰竭。
-          3. 连锁反应分析：重点研判这些核心跌停标的是否引发了全市场赚钱效应的坍塌（即：是否会带动明天更剧烈的核按钮）。
-          4. 信仰研判：基于“龙头信仰”逻辑，判定当前是“恐慌冰点”还是“退潮中继”。
-          日期：${review.date}。要求：风格尖锐刻刻，直击本质，Markdown 格式。
-        `;
-      } else if (mode === 'ladderAnalysis' && level) {
-        const lData = review.ladder[level];
-        prompt = `
-          任务：分析 A 股今日 ${level} 板（及以上）梯队的晋级质量。
-          当前数据：该梯队共 ${lData?.count} 家，晋级率约为 ${lData?.promoRate}%，核心标的为 [${lData?.stock}]。
-          
-          研判要求：
-          1. 判定状态：该梯队目前是“强一致加速”、“分化博弈”还是“退潮坍塌”？
-          2. 梯队逻辑：分析标的 [${lData?.stock}] 是否具备领涨地位，及其对下方低位板的带动效应（补涨逻辑）。
-          3. 风险预警：若明日晋级失败，对市场情绪的影响。
-          4. 信仰建议：此位置应格局、减仓还是止损？
-          日期：${review.date}。使用 Markdown，语气专业且果断。
-        `;
-      } else if (mode === 'sectorInterlinkage') {
-        prompt = `
-          任务：穿透分析今日 A 股主线板块间的联动效应。
-          当前主线情绪判定为：[${review.mainSectorSentiment}]。核心标的：[${review.dragon}]。
-          
-          研判要求：
-          1. 联动与吸血：分析当前最强板块（龙头板块）是对其他板块产生了“溢出带动效应”（一强带多强）还是“虹吸效应”（虹吸全场流动性导致其余崩塌）。
-          2. 翘翘板效应：识别今日是否存在明显的资金在某两个特定板块间的反复横跳（如 AI 与 金融，或 固态电池 与 机器人）。
-          3. 板块地位：哪个板块是真主线，哪个是掩护龙头的补涨分支，哪个是抽血大户。
-          4. 压制研判：主线龙头的放量/断板是否会直接引发次主流板块的恐慌性抛售。
-          日期：${review.date}。使用 Markdown，逻辑严密。
-        `;
-      }
+      // 构建关于持续性板块的描述
+      const persistenceText = persistentSectors.length > 0 
+        ? `【主线持续性监控】：发现板块 ${persistentSectors.map(([n, c]) => `[${n}](5日内出现${c}次)`).join(', ')}。这些可能为近期真正的核心主线。` 
+        : "【主线持续性监控】：暂无明显重复出现的主线板块。";
+
+      const prompt = `
+        作为资深游资指挥官，请针对 ${review.date} 盘面进行深度信仰研判。
+        
+        [实时数据]：成交 ${review.totalVol}T，涨停 ${review.limitUpTotal}/跌停 ${review.limitDownTotal}。
+        [市场核心]：总龙[${review.dragon}]，中军[${review.midArmy}]。
+        [梯队状态]：最高标[${review.ladder['5']?.stock || '无'}]，晋级率[${review.ladder['5']?.promoRate}%]。
+        
+        ${persistenceText}
+        
+        [研判要求]：
+        1. 必须针对上述“持续性板块”进行深度定性：它们是真主线还是未来的过渡？
+        2. 结合今日信仰评分 ${review.score}/100，判断明日盘面是加速还是分歧。
+        3. 给出实战级别的买入/持仓/卖出建议。
+      `;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt,
-        config: { tools: (mode === 'full' || mode === 'limitDown' || mode === 'ladderAnalysis' || mode === 'sectorInterlinkage') ? [{ googleSearch: {} }] : [] }
+        model: "gemini-3-pro-preview",
+        contents: prompt
       });
-
-      const text = response.text || "";
-      const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
-      if (chunks) {
-        setSources(chunks as GroundingSource[]);
-      }
-
-      if (mode !== 'polish') {
-        let updatedReview = { ...review, aiAnalysis: text };
-        
-        // 解析主线情绪标签 (仅在全面研判时)
-        if (mode === 'full') {
-          const sentimentMatch = text.match(/\[MAIN_SENTIMENT\](活跃|分化|退潮)\[\/MAIN_SENTIMENT\]/);
-          if (sentimentMatch) {
-            updatedReview.mainSectorSentiment = sentimentMatch[1];
-            updatedReview.aiAnalysis = text.replace(/\[MAIN_SENTIMENT\].*?\[\/MAIN_SENTIMENT\]/, "").trim();
-          }
-        }
-        
-        setReview(updatedReview);
-      } else {
-        setReview(prev => ({ ...prev, reflection: text }));
-      }
+      setReview(prev => ({ ...prev, aiAnalysis: response.text || "" }));
     } catch (e) {
-      console.error(e);
+      setReview(prev => ({ ...prev, aiAnalysis: "指挥官请求超时。" }));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen pb-20">
-      <header className="sticky top-0 z-50 glass border-b border-white/5 h-16 flex items-center px-6 justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center shadow-lg shadow-red-600/20">
-            <Flame className="text-white fill-white" size={18} />
-          </div>
-          <h1 className="text-lg font-black tracking-tight flex items-center gap-2">
-            <span className="text-white">龙头信仰</span>
-            <span className="text-red-500">v24.2</span>
-          </h1>
-        </div>
+    <div className="min-h-screen pb-20 bg-[#0a0a0c] text-[#e2e8f0] font-sans selection:bg-red-500/30">
+      {/* 顶部导航 */}
+      <header className="sticky top-0 z-[100] glass border-b border-white/5 h-16 flex items-center px-8 justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
-            <Calendar size={14} className="text-gray-500" />
-            <input type="date" value={review.date} onChange={e => setReview({...review, date: e.target.value})} className="bg-transparent border-none text-xs font-mono outline-none text-gray-300" />
+          <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-red-800 rounded-xl flex items-center justify-center shadow-lg shadow-red-600/20">
+            <Flame className="text-white fill-white" size={22} />
           </div>
-          <button onClick={fetchTodayData} disabled={isLoading} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50">
-            <Globe size={14} /> 获取情报
-          </button>
-          <button onClick={handleSave} className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-red-600/20">
-            <Save size={14} /> 保存复盘
-          </button>
+          <div className="flex flex-col text-left">
+            <h1 className="text-xl font-black tracking-tighter leading-none bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">龙头信仰 <span className="text-xs text-red-500 ml-1 font-bold">V27.5 PRO</span></h1>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-[10px] font-bold text-gray-500 tracking-[0.1em] uppercase">Ground Truth Terminal</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/10 group hover:border-red-500/30 transition-all">
+            <Calendar size={14} className="text-gray-500 group-hover:text-red-500 transition-colors" />
+            <input 
+              type="date" 
+              value={review.date} 
+              onChange={e => setReview({...review, date: e.target.value})} 
+              className="bg-transparent border-none text-[11px] font-mono font-bold outline-none text-gray-300 cursor-pointer" 
+            />
+          </div>
+
+          <div className="h-8 w-[1px] bg-white/10"></div>
+          
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setShowFileManager(!showFileManager)} 
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[11px] font-black transition-all border ${uploadedFiles.length > 0 ? 'bg-blue-600/20 border-blue-500 text-blue-400' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}
+            >
+              <FileUp size={14} /> {uploadedFiles.length > 0 ? `已加载 ${uploadedFiles.length} 信源` : '上传原始信源'}
+            </button>
+            <button onClick={autoFillMarketData} disabled={isLoading || uploadedFiles.length === 0} className="group flex items-center gap-2 px-5 py-2.5 bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-2xl text-[11px] font-black transition-all active:scale-95 disabled:opacity-50">
+              {isLoading ? <RefreshCcw className="animate-spin" size={14} /> : <DatabaseZap size={14} />} AI 自动填充
+            </button>
+            <button onClick={handleSave} className="flex items-center gap-2 px-6 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-2xl text-[11px] font-black transition-all active:scale-95 shadow-xl shadow-red-600/20">
+              <Save size={14} /> 归档复盘
+            </button>
+          </div>
         </div>
       </header>
 
-      <main className="max-w-[1600px] mx-auto px-6 mt-8 grid grid-cols-12 gap-8">
-        <div className="col-span-12 lg:col-span-4 space-y-6">
-          <section className="glass rounded-3xl p-6 border-l-4 border-red-500">
-            <div className="flex items-center justify-between mb-6">
-               <div className="flex items-center gap-2">
-                 <Zap className="text-yellow-400" size={18} />
-                 <h2 className="font-bold text-sm uppercase tracking-widest text-gray-400">01 情绪微观监控</h2>
-               </div>
-               <div className="text-[10px] font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded">核心信仰指标</div>
+      {/* 文件管理器面板 */}
+      {showFileManager && (
+        <div className="fixed inset-0 z-[150] bg-black/80 backdrop-blur-md flex items-center justify-center p-6">
+          <div className="w-full max-w-4xl bg-[#121215] border border-white/10 rounded-[3rem] p-10 shadow-2xl relative">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-4 text-left">
+                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                  <FileUp className="text-blue-500" size={24} />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black text-white uppercase tracking-tight">信源文件池</h3>
+                  <p className="text-xs text-gray-500 font-bold uppercase mt-1">Multi-Source Analysis Pool</p>
+                </div>
+              </div>
+              <button onClick={() => setShowFileManager(false)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-all">
+                <X size={20} className="text-gray-400" />
+              </button>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-gray-500">昨停今日溢价 (%)</label>
-                <div className="relative">
-                  <input type="number" step="0.1" value={review.yesterdayGain} onChange={e => setReview({...review, yesterdayGain: +e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none focus:border-red-500/50 font-bold" />
-                  <TrendingUp className={`absolute right-3 top-2.5 size-4 ${review.yesterdayGain > 0 ? 'text-red-500' : 'text-green-500 rotate-180'}`} />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-gray-500">大回撤/核按钮 (家)</label>
-                <div className="relative">
-                  <input type="number" value={review.nuclearCount} onChange={e => setReview({...review, nuclearCount: +e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none focus:border-green-500/50 font-bold" />
-                  <Skull className={`absolute right-3 top-2.5 size-4 ${review.nuclearCount > 5 ? 'text-red-500' : 'text-gray-600'}`} />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-red-400">非ST涨停</label>
-                <input type="number" value={review.lUp} onChange={e => setReview({...review, lUp: +e.target.value})} className="w-full bg-red-500/5 border border-red-500/10 rounded-xl px-4 py-2 text-sm outline-none font-bold text-red-400" />
-              </div>
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-bold text-green-400">跌停家数</label>
-                  <button 
-                    onClick={() => callAI('limitDown')} 
-                    disabled={isLoading || review.lDn === 0}
-                    className="group flex items-center gap-1.5 text-[9px] font-black text-green-500 hover:text-red-500 transition-all duration-300 disabled:opacity-30"
-                  >
-                    <Radio size={11} className={`transition-transform ${isLoading ? 'animate-spin' : 'group-hover:scale-125'}`} /> 风险穿透
-                  </button>
-                </div>
-                <div className="relative">
-                  <input type="number" value={review.lDn} onChange={e => setReview({...review, lDn: +e.target.value})} className="w-full bg-green-500/5 border border-green-500/10 rounded-xl px-4 py-2 text-sm outline-none font-bold text-green-400 cursor-pointer" />
-                  <AlertTriangle className={`absolute right-3 top-2.5 size-4 transition-colors ${review.lDn > 10 ? 'text-red-500 animate-pulse' : 'text-green-800'}`} />
-                </div>
-              </div>
-
-              {/* 主线板块情绪显示区域：增加点击穿透板块联动功能 */}
-              <div className="col-span-2 mt-2 pt-3 border-t border-white/5">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1">
-                    <Layers size={12} className="text-purple-400" /> 主线板块情绪
-                  </label>
-                  <button 
-                    onClick={() => callAI('sectorInterlinkage')}
-                    disabled={isLoading || review.mainSectorSentiment === '--'}
-                    className="text-[9px] font-black text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1 uppercase disabled:opacity-30"
-                  >
-                    <GitCompare size={10} /> 联动博弈穿透
-                  </button>
-                </div>
+            <div className="grid grid-cols-12 gap-8">
+              <div className="col-span-4">
                 <div 
-                  onClick={() => callAI('sectorInterlinkage')}
-                  className={`w-full py-3 px-4 rounded-2xl flex items-center justify-between transition-all duration-300 border cursor-pointer hover:scale-[1.01] active:scale-95 group
-                  ${review.mainSectorSentiment === '活跃' ? 'bg-red-500/10 border-red-500/20 text-red-500 shadow-lg shadow-red-500/5' : 
-                    review.mainSectorSentiment === '分化' ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500 shadow-lg shadow-yellow-500/5' :
-                    review.mainSectorSentiment === '退潮' ? 'bg-green-500/10 border-green-500/20 text-green-500 shadow-lg shadow-green-500/5' :
-                    'bg-white/5 border-white/10 text-gray-500'}
-                `}>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full animate-pulse
-                      ${review.mainSectorSentiment === '活跃' ? 'bg-red-500' : 
-                        review.mainSectorSentiment === '分化' ? 'bg-yellow-500' :
-                        review.mainSectorSentiment === '退潮' ? 'bg-green-500' :
-                        'bg-gray-700'}
-                    `} />
-                    <span className="text-sm font-black tracking-widest uppercase">
-                      {review.mainSectorSentiment || '--'}
-                    </span>
-                  </div>
-                  <Share2 size={12} className="text-current opacity-0 group-hover:opacity-100 transition-opacity" />
+                  onClick={() => fileInputRef.current?.click()}
+                  className="aspect-square border-2 border-dashed border-white/10 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-blue-500/40 hover:bg-blue-500/5 transition-all text-center group"
+                >
+                  <Upload size={32} className="text-blue-500 group-hover:scale-110 transition-transform" />
+                  <span className="block text-sm font-black text-white">点击上传截图/报表</span>
+                  <input type="file" ref={fileInputRef} multiple onChange={handleFileChange} className="hidden" accept="image/*,.pdf,.txt" />
                 </div>
               </div>
-            </div>
-          </section>
-
-          <section className="glass rounded-3xl p-6">
-            <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-3">
-              <Target className="text-blue-500" size={18} />
-              <h2 className="font-bold text-sm uppercase tracking-widest text-gray-400">02 空间梯队晋级</h2>
-            </div>
-            <div className="space-y-3">
-              {['5', '4', '3', '2', '1'].map(lvl => (
-                <div key={lvl} className="flex items-center gap-2 group">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black
-                    ${lvl === '5' ? 'bg-red-500/20 text-red-500' : 'bg-white/5 text-gray-400'}
-                  `}>
-                    {lvl === '5' ? '5+' : lvl}
-                  </div>
-                  <div className="flex-1 grid grid-cols-12 gap-2">
-                    <div className="col-span-3">
-                      <input type="number" value={review.ladder[lvl]?.count || 0} placeholder="家" onChange={e => {
-                        const nl = {...review.ladder}; nl[lvl] = { ...nl[lvl], count: +e.target.value }; setReview({...review, ladder: nl});
-                      }} className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-center outline-none" title="今日连板家数" />
+              <div className="col-span-8 flex flex-col">
+                <div className="flex-1 bg-black/40 border border-white/5 rounded-[2.5rem] p-6 h-[400px] overflow-y-auto custom-scrollbar">
+                  {uploadedFiles.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-gray-700 opacity-40">
+                      <FileText size={48} className="mb-4" />
+                      <p className="text-xs font-bold uppercase tracking-widest">暂无文件上传</p>
                     </div>
-                    
-                    {/* 晋级率显示与点击 AI 分析 */}
-                    <div className="col-span-3">
-                      <button 
-                        onClick={() => callAI('ladderAnalysis', lvl)}
-                        disabled={isLoading}
-                        className="w-full h-full bg-white/5 border border-white/10 hover:border-yellow-500/50 hover:bg-yellow-500/5 rounded-lg flex items-center justify-center gap-1 transition-all group/btn disabled:opacity-50"
-                        title={`点击分析 ${lvl} 板梯队质量`}
-                      >
-                        <span className="text-[10px] font-bold text-yellow-500">
-                          {review.ladder[lvl]?.promoRate || 0}%
-                        </span>
-                        <Gauge size={10} className="text-yellow-600 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
-                      </button>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                      {uploadedFiles.map((file, i) => (
+                        <div key={i} className="group bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center gap-4 hover:border-blue-500/40 transition-all relative">
+                          <div className="w-12 h-12 rounded-xl bg-black/40 overflow-hidden border border-white/5 flex items-center justify-center">
+                            {file.preview ? <img src={file.preview} className="w-full h-full object-cover" /> : <FileText size={20} className="text-blue-400" />}
+                          </div>
+                          <p className="text-xs font-black text-gray-300 truncate text-left flex-1">{file.name}</p>
+                          <button onClick={() => removeFile(i)} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-xl shadow-red-500/30"><X size={12} /></button>
+                        </div>
+                      ))}
                     </div>
-
-                    <div className="col-span-6">
-                      <input value={review.ladder[lvl]?.stock || ''} placeholder="核心标的" onChange={e => {
-                        const nl = {...review.ladder}; nl[lvl] = { ...nl[lvl], stock: e.target.value }; setReview({...review, ladder: nl});
-                      }} className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs outline-none group-hover:border-blue-500/50 transition-all font-bold text-gray-300" />
-                    </div>
-                  </div>
+                  )}
                 </div>
-              ))}
+                <button onClick={autoFillMarketData} disabled={isLoading || uploadedFiles.length === 0} className="mt-8 px-12 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-black transition-all shadow-2xl shadow-emerald-600/30 active:scale-95 disabled:opacity-50 self-end">立即启动 AI 数据填充</button>
+              </div>
             </div>
-          </section>
+          </div>
         </div>
+      )}
 
-        <div className="col-span-12 lg:col-span-8 space-y-8">
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <section className="glass rounded-3xl p-6 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none rotate-12">
-                   <Trophy size={80} />
+      <main className="max-w-[1780px] mx-auto px-8 mt-10">
+        <div className="grid grid-cols-12 gap-8">
+          
+          {/* 左侧栏 */}
+          <div className="col-span-12 xl:col-span-4 space-y-8 text-left">
+            <section className="glass rounded-[2.5rem] p-8 border-l-[8px] border-red-500 shadow-2xl">
+              <div className="flex items-center gap-3 mb-8">
+                <Activity className="text-red-500" size={20} />
+                <h2 className="font-black text-sm uppercase tracking-[0.2em] text-gray-400">01 宏观数据概览</h2>
+              </div>
+              <div className="grid grid-cols-4 gap-3.5 mb-8">
+                {review.indices.map((idx, i) => (
+                  <div key={i} className="bg-white/5 border border-white/5 p-3 rounded-[1.2rem] text-center">
+                    <div className="text-[10px] text-gray-500 font-black mb-2 uppercase">{idx.name}</div>
+                    <input type="number" step="0.01" value={idx.change} onChange={e => {
+                        const ni = [...review.indices]; ni[i].change = +e.target.value; setReview({...review, indices: ni});
+                    }} className={`bg-transparent w-full text-center text-xs font-black outline-none ${idx.change >= 0 ? 'text-red-500' : 'text-green-500'}`} />
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-6 p-6 bg-white/5 rounded-[1.5rem] border border-white/5">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-gray-500 uppercase flex items-center gap-2"><BarChart3 size={12}/> 成交量 (万亿)</label>
+                  <input type="number" step="0.01" value={review.totalVol} onChange={e => setReview({...review, totalVol: +e.target.value})} className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 w-full text-sm font-black text-red-500 outline-none" />
                 </div>
-                <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-3">
-                  <Trophy className="text-yellow-500" size={18} />
-                  <h2 className="font-bold text-sm uppercase tracking-widest text-gray-400">03 总龙与趋势中军</h2>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-gray-500 uppercase flex items-center gap-2"><ArrowUpRight size={12}/> 增减 (亿)</label>
+                  <input type="number" value={review.volDelta} onChange={e => setReview({...review, volDelta: +e.target.value})} className={`bg-white/5 border border-white/10 rounded-xl px-4 py-3 w-full text-sm font-black outline-none ${review.volDelta >= 0 ? 'text-red-500' : 'text-blue-400'}`} />
                 </div>
-                <div className="space-y-5">
-                   <div className="p-4 bg-red-500/5 rounded-2xl border border-red-500/10 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">情绪总龙头 (Dragon)</span>
-                        <select value={review.dragonStatus} onChange={e => setReview({...review, dragonStatus: e.target.value})} className="bg-transparent text-[10px] font-bold text-red-400 outline-none">
-                          <option value="broken">分歧/断板</option>
-                          <option value="accelerate">一致加速</option>
-                          <option value="revive">反包/二春</option>
-                        </select>
+              </div>
+            </section>
+
+            <section className="glass rounded-[2.5rem] p-8 border-l-[8px] border-purple-500 shadow-2xl">
+              <div className="flex items-center gap-3 mb-8">
+                <Layers className="text-purple-500" size={20} />
+                <h2 className="font-black text-sm uppercase tracking-[0.2em] text-gray-400">02 主线逻辑识别</h2>
+              </div>
+              <div className="space-y-4">
+                {review.topSectors.map((sector, i) => (
+                  <div key={i} className="bg-white/5 border border-white/5 p-6 rounded-[1.8rem] space-y-4">
+                    <input placeholder="板块名称..." value={sector.name} onChange={e => {
+                      const ns = [...review.topSectors]; ns[i].name = e.target.value; setReview({...review, topSectors: ns});
+                    }} className="bg-transparent text-lg font-black outline-none w-full" />
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="bg-black/40 p-2 text-center rounded-xl border border-white/5">
+                        <span className="text-[9px] text-gray-600 block mb-1">涨跌%</span>
+                        <input type="number" value={sector.gain} step="0.1" onChange={e => {
+                          const ns = [...review.topSectors]; ns[i].gain = +e.target.value; setReview({...review, topSectors: ns});
+                        }} className="bg-transparent text-xs font-black text-red-500 outline-none w-full text-center" />
                       </div>
-                      <input value={review.dragon} onChange={e => setReview({...review, dragon: e.target.value})} placeholder="输入当前最高标..." className="w-full bg-transparent border-none text-2xl font-black text-red-500 outline-none" />
-                   </div>
-                   <div className="p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">主线容量中军 (Army)</span>
-                        <select value={review.midStatus} onChange={e => setReview({...review, midStatus: e.target.value})} className="bg-transparent text-[10px] font-bold text-blue-400 outline-none">
-                          <option value="trend_up">趋势主升</option>
-                          <option value="shock">平台震荡</option>
-                          <option value="broken_trend">破位阴跌</option>
-                        </select>
+                      <div className="bg-black/40 p-2 text-center rounded-xl border border-white/5">
+                        <span className="text-[9px] text-gray-600 block mb-1">涨停#</span>
+                        <input type="number" value={sector.limitUps} onChange={e => {
+                          const ns = [...review.topSectors]; ns[i].limitUps = +e.target.value; setReview({...review, topSectors: ns});
+                        }} className="bg-transparent text-xs font-black text-white outline-none w-full text-center" />
                       </div>
-                      <input value={review.midArmy} onChange={e => setReview({...review, midArmy: e.target.value})} placeholder="输入板块权重..." className="w-full bg-transparent border-none text-2xl font-black text-blue-500 outline-none" />
-                   </div>
-                </div>
-              </section>
+                      <div className="bg-black/40 p-2 text-center rounded-xl border border-white/5">
+                        <span className="text-[9px] text-gray-600 block mb-1">量能亿</span>
+                        <input type="number" value={sector.volume} onChange={e => {
+                          const ns = [...review.topSectors]; ns[i].volume = +e.target.value; setReview({...review, topSectors: ns});
+                        }} className="bg-transparent text-xs font-black text-blue-400 outline-none w-full text-center" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
 
-              <section className="glass rounded-3xl p-6 flex flex-col">
-                <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-3">
-                  <PenTool className="text-orange-400" size={18} />
-                  <h2 className="font-bold text-sm uppercase tracking-widest text-gray-400">04 操盘手日志</h2>
+          {/* 右侧主内容区 */}
+          <div className="col-span-12 xl:col-span-8 space-y-8 text-left">
+            <section className="glass rounded-[2.5rem] p-10 border-l-[8px] border-blue-500 shadow-2xl">
+              <div className="flex items-center gap-3 mb-10">
+                <Scale className="text-blue-500" size={20} />
+                <h2 className="font-black text-sm uppercase tracking-[0.2em] text-gray-400">03 市场情绪 & 连板梯队</h2>
+              </div>
+              <div className="grid grid-cols-12 gap-8">
+                <div className="col-span-4 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-red-500/5 border border-red-500/10 p-5 rounded-2xl">
+                      <span className="text-[10px] font-black text-red-500/60 block mb-1">今日涨停</span>
+                      <input type="number" value={review.limitUpTotal} onChange={e => setReview({...review, limitUpTotal: +e.target.value})} className="bg-transparent text-3xl font-black text-red-500 outline-none w-full" />
+                    </div>
+                    <div className="bg-green-500/5 border border-green-500/10 p-5 rounded-2xl">
+                      <span className="text-[10px] font-black text-green-500/60 block mb-1">今日跌停</span>
+                      <input type="number" value={review.limitDownTotal} onChange={e => setReview({...review, limitDownTotal: +e.target.value})} className="bg-transparent text-3xl font-black text-green-500 outline-none w-full" />
+                    </div>
+                  </div>
+                  <div className="bg-white/5 border border-white/5 p-4 rounded-2xl flex justify-between items-center">
+                    <span className="text-[11px] font-black text-gray-400">炸板率 %</span>
+                    <input type="number" value={review.brokenRate} onChange={e => setReview({...review, brokenRate: +e.target.value})} className="bg-transparent text-right font-black text-yellow-500 outline-none w-16" />
+                  </div>
                 </div>
-                <textarea value={review.reflection} onChange={e => setReview({...review, reflection: e.target.value})} placeholder="记录信仰或恐惧..." className="flex-1 w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-orange-500/30 resize-none custom-scrollbar font-sans" />
-                <button onClick={() => callAI('polish')} className="mt-3 text-[10px] font-bold text-gray-500 hover:text-orange-400 transition-colors flex items-center gap-1 self-end">
-                   <Sparkles size={12} /> 信仰重构优化
-                </button>
-              </section>
-           </div>
+                <div className="col-span-8 flex flex-col gap-3">
+                  {['5', '4', '3', '2', '1'].map(lvl => (
+                    <div key={lvl} className="flex gap-4 group">
+                      <div className="w-14 text-center py-3 rounded-xl border border-white/10 bg-white/5 text-xs font-black text-blue-400">{lvl === '5' ? '5B+' : lvl + 'B'}</div>
+                      <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-6 group-hover:bg-white/[0.08] transition-all">
+                        <input placeholder={`${lvl === '5' ? '最高标' : lvl + '板核心'}...`} value={review.ladder[lvl]?.stock} onChange={e => {
+                          const nl = {...review.ladder}; nl[lvl].stock = e.target.value; setReview({...review, ladder: nl});
+                        }} className="bg-transparent text-sm font-black text-white outline-none w-full" />
+                        <div className="flex items-center gap-4 min-w-[150px]">
+                          <span className="text-[10px] text-gray-600 font-bold">家数:</span>
+                          <input type="number" value={review.ladder[lvl]?.count} onChange={e => {
+                            const nl = {...review.ladder}; nl[lvl].count = +e.target.value; setReview({...review, ladder: nl});
+                          }} className="bg-transparent w-8 text-xs font-black text-blue-400 outline-none" />
+                          <span className="text-[10px] text-gray-600 font-bold ml-2">晋级:</span>
+                          <input type="number" value={review.ladder[lvl]?.promoRate} onChange={e => {
+                            const nl = {...review.ladder}; nl[lvl].promoRate = +e.target.value; setReview({...review, ladder: nl});
+                          }} className="bg-transparent w-8 text-xs font-black text-yellow-500 outline-none" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
 
-           <section className="glass rounded-3xl p-8 border border-purple-500/20 shadow-2xl relative">
+            <div className="grid grid-cols-12 gap-8">
+               <section className="col-span-5 glass rounded-[2.5rem] p-8 border-l-[8px] border-yellow-500 shadow-2xl">
+                  <div className="flex items-center gap-3 mb-8">
+                    <Trophy className="text-yellow-500" size={20} />
+                    <h2 className="font-black text-sm uppercase tracking-[0.2em] text-gray-400">04 灵魂标的</h2>
+                  </div>
+                  <div className="space-y-6">
+                    <div className="bg-red-500/5 border border-red-500/10 p-6 rounded-[2rem] relative">
+                      <span className="text-[10px] font-black text-red-500 uppercase block mb-3">情绪总龙头</span>
+                      <input value={review.dragon} onChange={e => setReview({...review, dragon: e.target.value})} className="bg-transparent w-full text-2xl font-black text-red-500 outline-none mb-3" />
+                      <select value={review.dragonStatus} onChange={e => setReview({...review, dragonStatus: e.target.value as any})} className="bg-black/20 text-[11px] font-black text-red-500 outline-none p-2 rounded-xl border border-red-500/10 w-full cursor-pointer">
+                        <option value="accelerate">一致加速</option>
+                        <option value="divergence">分歧转强</option>
+                        <option value="broken">破位退潮</option>
+                        <option value="revive">反包穿越</option>
+                      </select>
+                    </div>
+                    <div className="bg-blue-500/5 border border-blue-500/10 p-6 rounded-[2rem]">
+                      <span className="text-[10px] font-black text-blue-500 uppercase block mb-3">趋势中军</span>
+                      <input value={review.midArmy} onChange={e => setReview({...review, midArmy: e.target.value})} className="bg-transparent w-full text-2xl font-black text-blue-500 outline-none" />
+                    </div>
+                  </div>
+               </section>
+               <section className="col-span-7 glass rounded-[2.5rem] p-8 border-l-[8px] border-emerald-500 shadow-2xl">
+                  <div className="flex items-center gap-3 mb-8">
+                    <Crosshair className="text-emerald-500" size={20} />
+                    <h2 className="font-black text-sm uppercase tracking-[0.2em] text-gray-400">05 核心备选</h2>
+                  </div>
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                    {review.watchlist.map((stock, i) => (
+                      <div key={i} className="bg-[#121215] border border-white/5 p-4 rounded-[1.8rem]">
+                        <input placeholder="股票名" value={stock.name} onChange={e => updateWatchlist(i, 'name', e.target.value)} className="bg-transparent w-full text-xs font-black text-white outline-none mb-2 border-b border-white/5 pb-1" />
+                        <input placeholder="逻辑" value={stock.concept} onChange={e => updateWatchlist(i, 'concept', e.target.value)} className="bg-transparent w-full text-[9px] font-bold text-emerald-500/70 outline-none mb-2" />
+                        <textarea placeholder="计划..." value={stock.plan} onChange={e => updateWatchlist(i, 'plan', e.target.value)} className="bg-black/20 w-full text-[9px] h-12 p-2 rounded-xl text-gray-400 outline-none resize-none border border-white/5" />
+                      </div>
+                    ))}
+                  </div>
+               </section>
+            </div>
+
+            {/* AI 指挥官集成研判区 */}
+            <section className="glass rounded-[3rem] p-10 border border-purple-500/20 shadow-2xl">
               <div className="flex items-center justify-between mb-8">
-                 <div className="flex items-center gap-3">
-                   <div className="w-10 h-10 rounded-2xl bg-purple-600/20 flex items-center justify-center border border-purple-500/30">
-                     <BrainCircuit className="text-purple-400" size={24} />
-                   </div>
-                   <div>
-                     <h2 className="text-xl font-black tracking-tight text-white uppercase">AI 信仰决策终端</h2>
-                     <span className="text-[10px] font-bold text-purple-400 tracking-widest uppercase">{review.stage}</span>
-                   </div>
-                 </div>
-                 <div className="flex gap-3">
-                    <div className="px-4 py-2 bg-black/40 border border-white/10 rounded-xl flex flex-col items-center">
-                       <span className="text-[9px] text-gray-500 font-bold">周期得分</span>
-                       <span className={`text-lg font-black ${review.score > 70 ? 'text-red-500' : 'text-green-500'}`}>{review.score}</span>
-                    </div>
-                    <button onClick={() => callAI('full')} disabled={isLoading} className="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-black transition-all flex items-center gap-2">
-                      {isLoading ? <RefreshCcw className="animate-spin" size={14} /> : <Zap size={14} />} 深度研判
-                    </button>
-                 </div>
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center text-white border border-white/20 shadow-2xl">
+                    <BrainCircuit size={32} />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black text-white uppercase tracking-tighter">AI 指挥官·全维研判</h2>
+                    <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest">Global Faith Decision Engine</span>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={() => callAI({type: 'optimization'})} disabled={isLoading} className="px-6 py-4 bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-2xl text-xs font-black transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2">
+                    <Wand2 size={16} /> 策略优化
+                  </button>
+                  <button onClick={() => callAI()} disabled={isLoading} className="px-6 py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl text-xs font-black shadow-xl shadow-purple-600/20 active:scale-95 disabled:opacity-50 flex items-center gap-2">
+                    <Zap size={16} /> 启动研判
+                  </button>
+                </div>
               </div>
-              <div className="min-h-[300px] bg-black/40 rounded-2xl border border-white/5 p-6 overflow-y-auto custom-scrollbar">
-                 <div className="prose prose-invert max-w-none prose-sm whitespace-pre-wrap text-gray-300">
-                    {isLoading ? (
-                      <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                        <RefreshCcw className="animate-spin text-purple-500" size={32} />
-                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest animate-pulse">{statusMsg}</span>
+
+              {/* 主线持续性监控提示器 (新增) */}
+              <div className="mb-8 p-6 bg-emerald-500/5 rounded-[2rem] border border-emerald-500/10">
+                <div className="flex items-center gap-3 mb-4">
+                   <Timer size={14} className="text-emerald-500" />
+                   <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">5日主线持续性监控 (出现≥2次)</span>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                   {persistentSectors.length > 0 ? (
+                      persistentSectors.map(([name, count]) => (
+                        <div key={name} className="flex items-center gap-3 bg-emerald-500/10 px-4 py-2 rounded-xl border border-emerald-500/20">
+                           <span className="text-xs font-black text-emerald-400">{name}</span>
+                           <span className="text-[10px] font-bold bg-emerald-500/20 px-1.5 rounded text-emerald-300">活跃{count}天</span>
+                        </div>
+                      ))
+                   ) : (
+                      <span className="text-[11px] text-gray-600 font-bold italic">暂无具有高持续性的观测板块...</span>
+                   )}
+                </div>
+              </div>
+
+              {/* 核心信仰分控制 */}
+              <div className="mb-8 p-8 bg-white/5 rounded-[2.5rem] border border-white/10 flex items-center gap-12 group transition-all hover:border-purple-500/30">
+                <div className="flex flex-col items-center border-r border-white/10 pr-12">
+                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.4em] mb-2">综合信仰分</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className={`text-5xl font-black transition-all duration-500 ${review.score > 70 ? 'text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.4)]' : review.score > 40 ? 'text-yellow-500' : 'text-green-500'}`}>{review.score}</span>
+                    <span className="text-xs font-black text-gray-700">%</span>
+                  </div>
+                </div>
+                <div className="flex-1 flex flex-col gap-4">
+                   <div className="flex items-center gap-6">
+                      <button onClick={() => setReview({...review, score: Math.max(0, review.score-5)})} className="w-12 h-12 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 font-black transition-all active:scale-90">-5</button>
+                      <div className="flex-1 h-3 bg-black/50 rounded-full border border-white/10 p-[2px] relative">
+                         <div className={`h-full transition-all duration-700 rounded-full ${review.score > 70 ? 'bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]' : review.score > 40 ? 'bg-yellow-500' : 'bg-green-500'}`} style={{ width: `${review.score}%` }}></div>
+                         <div className="absolute top-0 left-1/2 w-0.5 h-full bg-white/10"></div>
                       </div>
-                    ) : (
-                      review.aiAnalysis || "等待指挥部决策..."
-                    )}
-                 </div>
-                 {sources.length > 0 && !isLoading && (
-                   <div className="mt-4 pt-4 border-t border-white/10">
-                     <p className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-widest flex items-center gap-1">
-                       <LinkIcon size={10} /> 研判情报来源:
-                     </p>
-                     <div className="flex flex-wrap gap-2">
-                       {sources.map((s, idx) => s.web && (
-                         <a key={idx} href={s.web.uri} target="_blank" rel="noopener noreferrer" className="text-[10px] text-purple-400 hover:text-purple-300 underline flex items-center gap-1">
-                           {s.web.title || '情报源'} <ExternalLink size={8} />
-                         </a>
-                       ))}
-                     </div>
+                      <button onClick={() => setReview({...review, score: Math.min(100, review.score+5)})} className="w-12 h-12 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 font-black transition-all active:scale-90">+5</button>
                    </div>
-                 )}
-              </div>
-           </section>
-
-           <section className="glass rounded-3xl p-6">
-              <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-3">
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="text-gray-400" size={18} />
-                  <h2 className="font-bold text-sm uppercase tracking-widest text-gray-400">05 情绪分值走势</h2>
-                </div>
-                <div className="flex gap-2">
-                   <select value={compareDate} onChange={e => setCompareDate(e.target.value)} className="bg-white/5 text-[10px] font-bold text-gray-400 outline-none rounded px-2">
-                      <option value="">对比历史数据</option>
-                      {history.map(h => <option key={h.date} value={h.date}>{h.date}</option>)}
-                   </select>
+                   <div className="flex justify-between px-2 text-[9px] font-black text-gray-600 uppercase tracking-widest">
+                      <span>冰点/分歧</span>
+                      <span>主升/狂热</span>
+                   </div>
                 </div>
               </div>
-              <div className="h-[250px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={historyData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
-                    <XAxis dataKey="date" hide />
-                    <YAxis domain={[0, 100]} hide />
-                    <Tooltip contentStyle={{ backgroundColor: '#111', border: '1px solid #333', fontSize: '10px' }} />
-                    <Line type="monotone" dataKey="score" stroke="#ef4444" strokeWidth={3} dot={{ r: 4, fill: '#ef4444' }} />
-                  </LineChart>
-                </ResponsiveContainer>
+              
+              <div className="bg-black/40 rounded-[2.5rem] border border-white/5 p-8 custom-scrollbar min-h-[400px] relative backdrop-blur-sm">
+                {isLoading && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0c]/80 backdrop-blur-xl z-[150] rounded-[2.5rem]">
+                     <RefreshCcw className="animate-spin text-purple-500 mb-6" size={48} />
+                     <span className="text-sm font-black text-purple-400 uppercase tracking-widest">{statusMsg}</span>
+                  </div>
+                )}
+                <div className="prose prose-invert max-w-none font-sans text-gray-300">
+                  {review.aiAnalysis ? (
+                    <div dangerouslySetInnerHTML={{ __html: review.aiAnalysis.replace(/\n/g, '<br/>') }} />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-24 opacity-30">
+                      <ShieldAlert size={64} className="mb-6" />
+                      <p className="italic font-bold tracking-widest uppercase text-center">上传文件并填充数据，启动 AI 指挥官综合研判</p>
+                    </div>
+                  )}
+                </div>
               </div>
-           </section>
+            </section>
+          </div>
         </div>
+
+        {/* 信仰档案库 */}
+        <section className="mt-20 border-t border-white/5 pt-16 pb-32 text-left">
+          <div className="flex items-center gap-5 mb-12 px-2">
+            <History className="text-gray-500" size={24} />
+            <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">信仰档案库</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            {history.map((h) => (
+              <div key={h.date} onClick={() => setReview(h)} className={`p-8 rounded-[2.5rem] border transition-all cursor-pointer h-64 flex flex-col justify-between relative overflow-hidden ${review.date === h.date ? 'bg-red-600/10 border-red-500' : 'bg-[#121215] border-white/5 hover:border-white/20'}`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono font-black text-gray-600">{h.date}</span>
+                  {review.date === h.date && <div className="p-1 bg-red-500 rounded text-white"><CheckCircle2 size={12} /></div>}
+                </div>
+                <div className="flex flex-col">
+                  <span className={`text-5xl font-black ${review.date === h.date ? 'text-red-500' : 'text-white'}`}>{h.score}</span>
+                  <span className="text-[11px] font-black text-red-500/80 uppercase truncate mt-4">{h.dragon || '无高度标'}</span>
+                </div>
+                <div className="border-t border-white/5 pt-5 text-[10px] text-gray-600 flex justify-between uppercase font-black">
+                  <span>涨停:{h.limitUpTotal}</span>
+                  <span>成交:{h.totalVol}T</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </main>
-
-      <div style={{ position: 'fixed', left: '-9999px', top: 0 }}>
-        <div ref={captureRef} className="w-[1000px] bg-[#0a0a0c] p-12 text-white font-sans border-[10px] border-red-600/10">
-           <h1 className="text-4xl font-black italic mb-8">龙头信仰复盘报告 <span className="text-red-500 font-mono text-2xl">{review.date}</span></h1>
-        </div>
-      </div>
     </div>
   );
 };
