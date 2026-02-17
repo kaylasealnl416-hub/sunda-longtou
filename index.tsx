@@ -9,7 +9,7 @@ import {
   ArrowUp, ArrowDown, Ghost, AlertTriangle, Fingerprint, Coins, Star, Crosshair,
   SearchCode, ShieldAlert, ThermometerSun, ZapOff, Wand2, Bot, DatabaseZap,
   LayoutDashboard, ChevronRight, Info, FileText, ClipboardList, CheckCircle2,
-  Upload, X, FileUp, FileSearch, Calendar, Timer
+  Upload, X, FileUp, FileSearch, Calendar, Timer, Waves
 } from 'lucide-react';
 import { GoogleGenAI, Type } from "@google/genai";
 
@@ -18,7 +18,8 @@ const STORAGE_KEY = 'dragon_faith_system_v27_5';
 
 interface IndexData {
   name: string;
-  change: number;
+  value: number; // 指数点位数值
+  change: number; // 涨跌幅 % (保留结构用于历史兼容，但UI不展示)
   ma5Status: 'above' | 'below';
 }
 
@@ -69,7 +70,7 @@ interface MarketReview {
   watchlist: WatchStock[];
   reflection: string;
   score: number;
-  stage: string;
+  stage: string; // 混沌期、活跃期、分化期、退潮期
   aiAnalysis: string;
   sources: GroundingSource[];
   rawContext?: string;
@@ -78,14 +79,14 @@ interface MarketReview {
 const INITIAL_REVIEW: MarketReview = {
   date: new Date().toISOString().split('T')[0],
   indices: [
-    { name: '沪', change: 0, ma5Status: 'above' },
-    { name: '深', change: 0, ma5Status: 'above' },
-    { name: '创', change: 0, ma5Status: 'above' },
-    { name: '科', change: 0, ma5Status: 'above' },
-    { name: '300', change: 0, ma5Status: 'above' },
-    { name: '1000', change: 0, ma5Status: 'above' },
-    { name: '2000', change: 0, ma5Status: 'above' },
-    { name: '微盘', change: 0, ma5Status: 'above' },
+    { name: '沪', value: 0, change: 0, ma5Status: 'above' },
+    { name: '深', value: 0, change: 0, ma5Status: 'above' },
+    { name: '创', value: 0, change: 0, ma5Status: 'above' },
+    { name: '科', value: 0, change: 0, ma5Status: 'above' },
+    { name: '300', value: 0, change: 0, ma5Status: 'above' },
+    { name: '1000', value: 0, change: 0, ma5Status: 'above' },
+    { name: '2000', value: 0, change: 0, ma5Status: 'above' },
+    { name: '微盘', value: 0, change: 0, ma5Status: 'above' },
   ],
   totalVol: 0, volDelta: 0, volMA5: 'increasing',
   upCount: 0, dnCount: 0,
@@ -102,7 +103,7 @@ const INITIAL_REVIEW: MarketReview = {
   brokenRate: 0, yesterdayGain: 0, nuclearCount: 0,
   dragon: '', dragonStatus: 'accelerate', midArmy: '',
   watchlist: Array(9).fill({ name: '', concept: '', plan: '' }),
-  reflection: '', score: 50, stage: '混沌期', aiAnalysis: '',
+  reflection: '', score: 50, stage: '待研判', aiAnalysis: '',
   sources: [],
 };
 
@@ -199,15 +200,24 @@ const App = () => {
         请【务必以我上传的文件内容作为唯一真相】进行解析填充。
         
         解析要求：
-        1. 提取各指数精确涨跌幅、成交额及增减。
+        1. 提取各指数精确的【当日收盘点位数值】、全场成交额及增减。不需要提取任何涨跌幅百分比。
         2. 提取涨停数、跌停数、炸板率。
         3. 识别前三主线板块及其详细数据。
-        4. 识别连板梯队（1-5B及以上）的具体标的、家数和晋级率。最高统计到5B+。
+        4. 识别连板梯队（1-5B及以上）的具体标得、家数和晋级率。最高统计到5B+。
         5. 锁定核心总龙头和趋势中军。
 
         返回 JSON 格式：
         {
-          "indices": {"沪": 涨跌%, "深": %, ...},
+          "indices": {
+            "沪": 点位数值,
+            "深": 点位数值,
+            "创": 点位数值,
+            "科": 点位数值,
+            "300": 点位数值,
+            "1000": 点位数值,
+            "2000": 点位数值,
+            "微盘": 点位数值
+          },
           "totalVol": 数值, "volDelta": 数值,
           "sentiment": {"limitUp": 数量, "limitDown": 数量, "brokenRate": %},
           "sectors": [{"name": "板块名", "gain": %, "limitUps": 数量, "volume": 亿}, ...],
@@ -230,8 +240,9 @@ const App = () => {
       setReview((prev): MarketReview => {
         const newIndices: IndexData[] = prev.indices.map(idx => ({
           ...idx,
-          change: data.indices?.[idx.name] ?? idx.change,
-          ma5Status: ((data.indices?.[idx.name] ?? 0) >= 0 ? 'above' : 'below') as 'above' | 'below'
+          value: data.indices?.[idx.name] ?? idx.value,
+          change: 0,
+          ma5Status: 'above'
         }));
         const newSectors = prev.topSectors.map((s, i) => data.sectors?.[i] ? { ...data.sectors[i] } : s);
         const newLadder = { ...prev.ladder };
@@ -252,12 +263,53 @@ const App = () => {
           ladder: newLadder,
           dragon: data.dragon ?? prev.dragon,
           midArmy: data.midArmy ?? prev.midArmy,
-          aiAnalysis: `【解析成功】基于 ${uploadedFiles.length} 个原始信源提炼。已聚焦 1-5B+ 核心梯队。`
+          aiAnalysis: `【解析成功】基于 ${uploadedFiles.length} 个原始信源提炼。已同步 ${review.date} 各指数收盘点位。`
         };
       });
       setShowFileManager(false);
     } catch (e) {
       alert("AI 深度解析异常。");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const analyzeSentimentCycle = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
+    setStatusMsg("正在通过量价情绪模型研判当前周期阶段...");
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const prompt = `
+        你是一个拥有15年A股短线博弈经验的顶级游资。请根据以下数据，研判当前市场处于情绪周期的哪个阶段：
+        [混沌期、活跃期、分化期、退潮期] 选其一。
+        
+        [数据]：
+        成交：${review.totalVol}T，较昨日：${review.volDelta}亿。
+        情绪：涨停${review.limitUpTotal} / 跌停${review.limitDownTotal} / 炸板率${review.brokenRate}%。
+        梯队：5B+最高标[${review.ladder['5']?.stock}]。
+        龙头：[${review.dragon}] 状态[${review.dragonStatus}]。
+        
+        [要求]：
+        1. 输出格式：【周期结论】：阶段名。随后给出3句话以内的核心研判逻辑。
+        2. 逻辑必须硬核，涉及量能与连板接力的匹配度。
+      `;
+      const response = await ai.models.generateContent({
+        model: "gemini-3-pro-preview",
+        contents: prompt
+      });
+      
+      const result = response.text || "";
+      const stageMatch = result.match(/【周期结论】：(混沌期|活跃期|分化期|退潮期)/);
+      const stage = stageMatch ? stageMatch[1] : "混沌期";
+      
+      setReview(prev => ({ 
+        ...prev, 
+        stage: stage,
+        aiAnalysis: `【周期深度研判】\n${result}\n\n--- 历史分析记录 ---\n${prev.aiAnalysis}`
+      }));
+    } catch (e) {
+      alert("周期研判失败。");
     } finally {
       setIsLoading(false);
     }
@@ -270,7 +322,6 @@ const App = () => {
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
-      // 构建关于持续性板块的描述
       const persistenceText = persistentSectors.length > 0 
         ? `【主线持续性监控】：发现板块 ${persistentSectors.map(([n, c]) => `[${n}](5日内出现${c}次)`).join(', ')}。这些可能为近期真正的核心主线。` 
         : "【主线持续性监控】：暂无明显重复出现的主线板块。";
@@ -278,16 +329,22 @@ const App = () => {
       const prompt = `
         作为资深游资指挥官，请针对 ${review.date} 盘面进行深度信仰研判。
         
-        [实时数据]：成交 ${review.totalVol}T，涨停 ${review.limitUpTotal}/跌停 ${review.limitDownTotal}。
-        [市场核心]：总龙[${review.dragon}]，中军[${review.midArmy}]。
-        [梯队状态]：最高标[${review.ladder['5']?.stock || '无'}]，晋级率[${review.ladder['5']?.promoRate}%]。
+        [实时数据情况]：
+        指数收盘数值：${review.indices.map(i => `${i.name}:${i.value}`).join(', ')}
+        全场成交：${review.totalVol}T，较昨日：${review.volDelta > 0 ? '+' : ''}${review.volDelta}亿。
+        情绪：涨停 ${review.limitUpTotal} / 跌停 ${review.limitDownTotal} / 炸板率 ${review.brokenRate}%。
+        [核心标的]：总龙[${review.dragon}]，中军[${review.midArmy}]。
+        [梯队状态]：最高标[${review.ladder['5']?.stock || '无'}]。
+        [周期定性]：${review.stage}。
         
         ${persistenceText}
         
-        [研判要求]：
-        1. 必须针对上述“持续性板块”进行深度定性：它们是真主线还是未来的过渡？
-        2. 结合今日信仰评分 ${review.score}/100，判断明日盘面是加速还是分歧。
-        3. 给出实战级别的买入/持仓/卖出建议。
+        [研判任务]：
+        1. 必须针对今日各指数收盘数值所对应的关键位支撑/压力，以及上述“高持续性板块”进行深度研判。
+        2. 结合今日评分 ${review.score}/100，给出明日具体的信仰博弈策略。
+        3. 产出具体的买入、锁仓或止损卖出的实战指南。
+        4. 【策略标签要求】：在给出实战操作建议时，必须针对每条核心操作，明确标注策略类型标签。
+           可选标签：【追涨】、【低吸】、【潜伏】、【反包】。
       `;
 
       const response = await ai.models.generateContent({
@@ -296,15 +353,51 @@ const App = () => {
       });
       setReview(prev => ({ ...prev, aiAnalysis: response.text || "" }));
     } catch (e) {
-      setReview(prev => ({ ...prev, aiAnalysis: "指挥官请求超时。" }));
+      setReview(prev => ({ ...prev, aiAnalysis: "指挥官研判超时，请重试。" }));
     } finally {
       setIsLoading(false);
     }
   };
 
+  // 渲染格式化后的 AI 分析文本
+  const renderFormattedAnalysis = (text: string) => {
+    if (!text) return null;
+    
+    const lines = text.split('\n');
+    return lines.map((line, idx) => {
+      // 匹配标签模式 【XXX】
+      const labelRegex = /(【[^】]+】)/g;
+      const parts = line.split(labelRegex);
+      
+      return (
+        <div key={idx} className="mb-2 leading-relaxed text-[13px]">
+          {parts.map((part, pIdx) => {
+            if (part.startsWith('【') && part.endsWith('】')) {
+              const label = part.slice(1, -1);
+              let colorClasses = "bg-gray-500/10 border-gray-500/30 text-gray-400"; // 默认
+
+              if (label === '追涨') colorClasses = "bg-red-500/20 border-red-500/30 text-red-400";
+              if (label === '低吸') colorClasses = "bg-blue-500/20 border-blue-500/30 text-blue-400";
+              if (label === '潜伏') colorClasses = "bg-emerald-500/20 border-emerald-500/30 text-emerald-400";
+              if (label === '反包') colorClasses = "bg-yellow-500/20 border-yellow-500/30 text-yellow-400";
+              if (label === '核心建议' || label === '重要要求') colorClasses = "bg-purple-500/20 border-purple-500/30 text-purple-400";
+              if (label === '周期结论') colorClasses = "bg-indigo-500/20 border-indigo-500/30 text-indigo-400";
+
+              return (
+                <span key={pIdx} className={`inline-block px-2 py-0.5 rounded-lg border text-[10px] font-black mr-2 uppercase tracking-tighter ${colorClasses}`}>
+                  {label}
+                </span>
+              );
+            }
+            return <span key={pIdx}>{part}</span>;
+          })}
+        </div>
+      );
+    });
+  };
+
   return (
     <div className="min-h-screen pb-20 bg-[#0a0a0c] text-[#e2e8f0] font-sans selection:bg-red-500/30">
-      {/* 顶部导航 */}
       <header className="sticky top-0 z-[100] glass border-b border-white/5 h-16 flex items-center px-8 justify-between">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-red-800 rounded-xl flex items-center justify-center shadow-lg shadow-red-600/20">
@@ -349,7 +442,6 @@ const App = () => {
         </div>
       </header>
 
-      {/* 文件管理器面板 */}
       {showFileManager && (
         <div className="fixed inset-0 z-[150] bg-black/80 backdrop-blur-md flex items-center justify-center p-6">
           <div className="w-full max-w-4xl bg-[#121215] border border-white/10 rounded-[3rem] p-10 shadow-2xl relative">
@@ -409,7 +501,6 @@ const App = () => {
       <main className="max-w-[1780px] mx-auto px-8 mt-10">
         <div className="grid grid-cols-12 gap-8">
           
-          {/* 左侧栏 */}
           <div className="col-span-12 xl:col-span-4 space-y-8 text-left">
             <section className="glass rounded-[2.5rem] p-8 border-l-[8px] border-red-500 shadow-2xl">
               <div className="flex items-center gap-3 mb-8">
@@ -418,11 +509,20 @@ const App = () => {
               </div>
               <div className="grid grid-cols-4 gap-3.5 mb-8">
                 {review.indices.map((idx, i) => (
-                  <div key={i} className="bg-white/5 border border-white/5 p-3 rounded-[1.2rem] text-center">
+                  <div key={i} className="bg-white/5 border border-white/5 p-4 rounded-[1.2rem] text-center group hover:bg-white/10 transition-all flex flex-col justify-center min-h-[80px]">
                     <div className="text-[10px] text-gray-500 font-black mb-2 uppercase">{idx.name}</div>
-                    <input type="number" step="0.01" value={idx.change} onChange={e => {
-                        const ni = [...review.indices]; ni[i].change = +e.target.value; setReview({...review, indices: ni});
-                    }} className={`bg-transparent w-full text-center text-xs font-black outline-none ${idx.change >= 0 ? 'text-red-500' : 'text-green-500'}`} />
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      value={idx.value} 
+                      onChange={e => {
+                        const ni = [...review.indices]; 
+                        ni[i].value = +e.target.value; 
+                        setReview({...review, indices: ni});
+                      }} 
+                      placeholder="点位数值"
+                      className="bg-transparent w-full text-center text-[15px] font-black text-white outline-none placeholder:text-gray-700" 
+                    />
                   </div>
                 ))}
               </div>
@@ -475,7 +575,6 @@ const App = () => {
             </section>
           </div>
 
-          {/* 右侧主内容区 */}
           <div className="col-span-12 xl:col-span-8 space-y-8 text-left">
             <section className="glass rounded-[2.5rem] p-10 border-l-[8px] border-blue-500 shadow-2xl">
               <div className="flex items-center gap-3 mb-10">
@@ -564,19 +663,31 @@ const App = () => {
                </section>
             </div>
 
-            {/* AI 指挥官集成研判区 */}
             <section className="glass rounded-[3rem] p-10 border border-purple-500/20 shadow-2xl">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-6">
                   <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center text-white border border-white/20 shadow-2xl">
                     <BrainCircuit size={32} />
                   </div>
-                  <div>
-                    <h2 className="text-2xl font-black text-white uppercase tracking-tighter">AI 指挥官·全维研判</h2>
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-3">
+                      <h2 className="text-2xl font-black text-white uppercase tracking-tighter">AI 指挥官·全维研判</h2>
+                      <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
+                        review.stage === '活跃期' ? 'bg-red-500/20 border-red-500/40 text-red-400' :
+                        review.stage === '退潮期' ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' :
+                        review.stage === '分化期' ? 'bg-yellow-500/20 border-yellow-500/40 text-yellow-400' :
+                        'bg-blue-500/20 border-blue-500/40 text-blue-400'
+                      }`}>
+                        {review.stage}
+                      </div>
+                    </div>
                     <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest">Global Faith Decision Engine</span>
                   </div>
                 </div>
                 <div className="flex gap-3">
+                  <button onClick={analyzeSentimentCycle} disabled={isLoading} className="px-6 py-4 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-2xl text-xs font-black transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2">
+                    <Waves size={16} /> 周期定性
+                  </button>
                   <button onClick={() => callAI({type: 'optimization'})} disabled={isLoading} className="px-6 py-4 bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-2xl text-xs font-black transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2">
                     <Wand2 size={16} /> 策略优化
                   </button>
@@ -586,7 +697,6 @@ const App = () => {
                 </div>
               </div>
 
-              {/* 主线持续性监控提示器 (新增) */}
               <div className="mb-8 p-6 bg-emerald-500/5 rounded-[2rem] border border-emerald-500/10">
                 <div className="flex items-center gap-3 mb-4">
                    <Timer size={14} className="text-emerald-500" />
@@ -606,7 +716,6 @@ const App = () => {
                 </div>
               </div>
 
-              {/* 核心信仰分控制 */}
               <div className="mb-8 p-8 bg-white/5 rounded-[2.5rem] border border-white/10 flex items-center gap-12 group transition-all hover:border-purple-500/30">
                 <div className="flex flex-col items-center border-r border-white/10 pr-12">
                   <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.4em] mb-2">综合信仰分</span>
@@ -640,7 +749,7 @@ const App = () => {
                 )}
                 <div className="prose prose-invert max-w-none font-sans text-gray-300">
                   {review.aiAnalysis ? (
-                    <div dangerouslySetInnerHTML={{ __html: review.aiAnalysis.replace(/\n/g, '<br/>') }} />
+                    renderFormattedAnalysis(review.aiAnalysis)
                   ) : (
                     <div className="flex flex-col items-center justify-center py-24 opacity-30">
                       <ShieldAlert size={64} className="mb-6" />
@@ -653,7 +762,6 @@ const App = () => {
           </div>
         </div>
 
-        {/* 信仰档案库 */}
         <section className="mt-20 border-t border-white/5 pt-16 pb-32 text-left">
           <div className="flex items-center gap-5 mb-12 px-2">
             <History className="text-gray-500" size={24} />
