@@ -2,24 +2,21 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { 
-  Flame, Zap, BarChart3, Target, Trophy, PenTool, BrainCircuit, 
-  Sparkles, Globe, Link as LinkIcon, History, ShieldCheck, 
-  TrendingUp, TrendingDown, Layers, Radio, Gauge, ExternalLink, 
-  Activity, ArrowUpRight, Scale, Monitor, Save, RefreshCcw,
-  ArrowUp, ArrowDown, Ghost, AlertTriangle, Fingerprint, Coins, Star, Crosshair,
-  SearchCode, ShieldAlert, ThermometerSun, ZapOff, Wand2, Bot, DatabaseZap,
-  LayoutDashboard, ChevronRight, Info, FileText, ClipboardList, CheckCircle2,
-  Upload, X, FileUp, FileSearch, Calendar, Timer, Waves
+  Flame, Zap, BarChart3, Target, Trophy, BrainCircuit, 
+  History, TrendingUp, TrendingDown, Layers, Activity, 
+  ArrowUpRight, Scale, Save, RefreshCcw, ArrowRight,
+  ShieldAlert, Wand2, DatabaseZap, X, FileUp, Calendar, Timer, Waves,
+  ChevronDown, MessageSquareCode, Radio, Cpu
 } from 'lucide-react';
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 
 // --- Types & Constants ---
-const STORAGE_KEY = 'dragon_faith_system_v27_5';
+const STORAGE_KEY = 'dragon_faith_system_v28_0';
 
 interface IndexData {
   name: string;
-  value: number; // 指数点位数值
-  change: number; // 涨跌幅 % (保留结构用于历史兼容，但UI不展示)
+  value: number;
+  change: number;
   ma5Status: 'above' | 'below';
 }
 
@@ -36,15 +33,10 @@ interface WatchStock {
   plan: string;
 }
 
-interface GroundingSource {
-  title: string;
-  uri: string;
-}
-
 interface UploadedFile {
   name: string;
   mimeType: string;
-  data: string; // base64
+  data: string;
   preview?: string;
 }
 
@@ -53,45 +45,40 @@ interface MarketReview {
   indices: IndexData[];
   totalVol: number;
   volDelta: number;
-  volMA5: 'increasing' | 'decreasing';
-  upCount: number;
-  dnCount: number;
-  topSectors: SectorTrack[];
-  isMainLine: 'confirmed' | 'rotating' | 'random';
-  ladder: Record<string, { count: number; stock: string; concept: string; promoRate: number }>;
   limitUpTotal: number;
   limitDownTotal: number;
   brokenRate: number;
-  yesterdayGain: number;
-  nuclearCount: number;
+  topSectors: SectorTrack[];
+  ladder: Record<string, { count: number; stock: string; concept: string; promoRate: number }>;
   dragon: string;
   dragonStatus: 'accelerate' | 'divergence' | 'broken' | 'revive';
   midArmy: string;
   watchlist: WatchStock[];
-  reflection: string;
   score: number;
-  stage: string; // 混沌期、活跃期、分化期、退潮期
+  stage: string; 
   aiAnalysis: string;
-  sources: GroundingSource[];
-  rawContext?: string;
 }
 
 const INITIAL_REVIEW: MarketReview = {
   date: new Date().toISOString().split('T')[0],
   indices: [
-    { name: '沪', value: 0, change: 0, ma5Status: 'above' },
-    { name: '深', value: 0, change: 0, ma5Status: 'above' },
-    { name: '创', value: 0, change: 0, ma5Status: 'above' },
-    { name: '科', value: 0, change: 0, ma5Status: 'above' },
-    { name: '300', value: 0, change: 0, ma5Status: 'above' },
-    { name: '1000', value: 0, change: 0, ma5Status: 'above' },
-    { name: '2000', value: 0, change: 0, ma5Status: 'above' },
-    { name: '微盘', value: 0, change: 0, ma5Status: 'above' },
+    { name: '上证', value: 0, change: 0, ma5Status: 'above' },
+    { name: '深成', value: 0, change: 0, ma5Status: 'above' },
+    { name: '创业', value: 0, change: 0, ma5Status: 'above' },
+    { name: '科创', value: 0, change: 0, ma5Status: 'above' },
+    { name: '沪深300', value: 0, change: 0, ma5Status: 'above' },
+    { name: '中证1000', value: 0, change: 0, ma5Status: 'above' },
+    { name: '中证2000', value: 0, change: 0, ma5Status: 'above' },
+    { name: '微盘股', value: 0, change: 0, ma5Status: 'above' },
   ],
-  totalVol: 0, volDelta: 0, volMA5: 'increasing',
-  upCount: 0, dnCount: 0,
-  topSectors: Array(3).fill({ name: '', gain: 0, limitUps: 0, volume: 0 }),
-  isMainLine: 'confirmed',
+  totalVol: 0, volDelta: 0,
+  limitUpTotal: 0, limitDownTotal: 0,
+  brokenRate: 0,
+  topSectors: [
+    { name: '', gain: 0, limitUps: 0, volume: 0 },
+    { name: '', gain: 0, limitUps: 0, volume: 0 },
+    { name: '', gain: 0, limitUps: 0, volume: 0 }
+  ],
   ladder: {
     '5': { count: 0, stock: '', concept: '', promoRate: 0 },
     '4': { count: 0, stock: '', concept: '', promoRate: 0 },
@@ -99,12 +86,9 @@ const INITIAL_REVIEW: MarketReview = {
     '2': { count: 0, stock: '', concept: '', promoRate: 0 },
     '1': { count: 0, stock: '', concept: '', promoRate: 0 },
   },
-  limitUpTotal: 0, limitDownTotal: 0,
-  brokenRate: 0, yesterdayGain: 0, nuclearCount: 0,
   dragon: '', dragonStatus: 'accelerate', midArmy: '',
-  watchlist: Array(9).fill({ name: '', concept: '', plan: '' }),
-  reflection: '', score: 50, stage: '待研判', aiAnalysis: '',
-  sources: [],
+  watchlist: Array(6).fill({ name: '', concept: '', plan: '' }),
+  score: 50, stage: '待研判', aiAnalysis: '',
 };
 
 const App = () => {
@@ -121,31 +105,28 @@ const App = () => {
     if (saved) setHistory(JSON.parse(saved));
   }, []);
 
-  // 核心逻辑：计算过去 5 日重复出现的主线
   const persistentSectors = useMemo(() => {
     const last5 = history.slice(0, 5);
     const currentSectors = review.topSectors.map(s => s.name.trim()).filter(Boolean);
     const historicalSectors = last5.flatMap(h => h.topSectors.map(s => s.name.trim()).filter(Boolean));
-    
     const allSectors = [...currentSectors, ...historicalSectors];
     const counts: Record<string, number> = {};
-    allSectors.forEach(name => {
-      counts[name] = (counts[name] || 0) + 1;
-    });
-
-    return Object.entries(counts)
-      .filter(([name, count]) => count >= 2)
-      .sort((a, b) => b[1] - a[1]);
+    allSectors.forEach(name => { counts[name] = (counts[name] || 0) + 1; });
+    return Object.entries(counts).filter(([_, count]) => count >= 2).sort((a, b) => b[1] - a[1]);
   }, [history, review.topSectors]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-
     const newFiles: UploadedFile[] = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const base64 = await fileToBase64(file);
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve) => {
+        reader.onload = () => resolve(reader.result?.toString().split(',')[1] || '');
+        reader.readAsDataURL(file);
+      });
+      const base64 = await base64Promise;
       newFiles.push({
         name: file.name,
         mimeType: file.type,
@@ -156,240 +137,77 @@ const App = () => {
     setUploadedFiles(prev => [...prev, ...newFiles].slice(-10));
   };
 
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result?.toString().split(',')[1] || '');
-      reader.onerror = error => reject(error);
-    });
-  };
-
-  const removeFile = (index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
   const handleSave = () => {
-    const updated = { ...review };
-    const newHistory = [updated, ...history.filter(h => h.date !== updated.date)].sort((a,b) => b.date.localeCompare(a.date));
+    const newHistory = [review, ...history.filter(h => h.date !== review.date)].sort((a,b) => b.date.localeCompare(a.date));
     setHistory(newHistory);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newHistory));
-    alert(`${review.date} 信仰记录已归档。`);
-  };
-
-  const updateWatchlist = (index: number, field: keyof WatchStock, value: string) => {
-    const nw = [...review.watchlist];
-    nw[index] = { ...nw[index], [field]: value };
-    setReview({ ...review, watchlist: nw });
+    alert("今日复盘已成功归档至信仰库。");
   };
 
   const autoFillMarketData = async () => {
-    if (isLoading) return;
-    if (uploadedFiles.length === 0) {
-      alert("请先上传数据信源。");
-      return;
-    }
+    if (isLoading || uploadedFiles.length === 0) return;
     setIsLoading(true);
-    setStatusMsg(`正在深度分析上传的 ${uploadedFiles.length} 个文件并合成市场数据...`);
-    
+    setStatusMsg("正在通过AI解构原始信源数据...");
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const parts: any[] = [];
-      parts.push({
-        text: `你是一个精通A股短线博弈的数据专家。现在是 ${review.date}。
-        请【务必以我上传的文件内容作为唯一真相】进行解析填充。
-        
-        解析要求：
-        1. 提取各指数精确的【当日收盘点位数值】、全场成交额及增减。不需要提取任何涨跌幅百分比。
-        2. 提取涨停数、跌停数、炸板率。
-        3. 识别前三主线板块及其详细数据。
-        4. 识别连板梯队（1-5B及以上）的具体标得、家数和晋级率。最高统计到5B+。
-        5. 锁定核心总龙头和趋势中军。
-
-        返回 JSON 格式：
-        {
-          "indices": {
-            "沪": 点位数值,
-            "深": 点位数值,
-            "创": 点位数值,
-            "科": 点位数值,
-            "300": 点位数值,
-            "1000": 点位数值,
-            "2000": 点位数值,
-            "微盘": 点位数值
-          },
-          "totalVol": 数值, "volDelta": 数值,
-          "sentiment": {"limitUp": 数量, "limitDown": 数量, "brokenRate": %},
-          "sectors": [{"name": "板块名", "gain": %, "limitUps": 数量, "volume": 亿}, ...],
-          "dragon": "总龙头名称", "midArmy": "趋势中军名称",
-          "ladder": {"5": {"stock": "股名", "count": 数量, "promoRate": %}, ...}
-        }`
-      });
-      uploadedFiles.forEach(file => {
-        parts.push({ inlineData: { mimeType: file.mimeType, data: file.data } });
-      });
-
+      const parts: any[] = [{ text: `你是一个精通A股复盘的数据专家。解析附件内容并填充复盘JSON。指数部分仅提取收盘点位。` }];
+      uploadedFiles.forEach(file => parts.push({ inlineData: { mimeType: file.mimeType, data: file.data } }));
       const response = await ai.models.generateContent({
         model: "gemini-3-pro-preview",
         contents: { parts },
         config: { responseMimeType: "application/json" }
       });
-
       const data = JSON.parse(response.text || "{}");
-      
-      setReview((prev): MarketReview => {
-        const newIndices: IndexData[] = prev.indices.map(idx => ({
-          ...idx,
-          value: data.indices?.[idx.name] ?? idx.value,
-          change: 0,
-          ma5Status: 'above'
-        }));
-        const newSectors = prev.topSectors.map((s, i) => data.sectors?.[i] ? { ...data.sectors[i] } : s);
-        const newLadder = { ...prev.ladder };
-        if (data.ladder) {
-          Object.keys(data.ladder).forEach(lvl => {
-            if (newLadder[lvl]) newLadder[lvl] = { ...newLadder[lvl], ...data.ladder[lvl] };
-          });
-        }
-        return {
-          ...prev,
-          indices: newIndices,
-          totalVol: data.totalVol ?? prev.totalVol,
-          volDelta: data.volDelta ?? prev.volDelta,
-          limitUpTotal: data.sentiment?.limitUp ?? prev.limitUpTotal,
-          limitDownTotal: data.sentiment?.limitDown ?? prev.limitDownTotal,
-          brokenRate: data.sentiment?.brokenRate ?? prev.brokenRate,
-          topSectors: newSectors,
-          ladder: newLadder,
-          dragon: data.dragon ?? prev.dragon,
-          midArmy: data.midArmy ?? prev.midArmy,
-          aiAnalysis: `【解析成功】基于 ${uploadedFiles.length} 个原始信源提炼。已同步 ${review.date} 各指数收盘点位。`
-        };
-      });
+      setReview(prev => ({ ...prev, ...data, aiAnalysis: "信源同步完成。建议立即进行周期定性分析。" }));
       setShowFileManager(false);
-    } catch (e) {
-      alert("AI 深度解析异常。");
-    } finally {
-      setIsLoading(false);
-    }
+    } catch (e) { alert("自动填充失败"); } finally { setIsLoading(false); }
   };
 
   const analyzeSentimentCycle = async () => {
     if (isLoading) return;
     setIsLoading(true);
-    setStatusMsg("正在通过量价情绪模型研判当前周期阶段...");
+    setStatusMsg("正在研判情绪周期阶段...");
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const prompt = `
-        你是一个拥有15年A股短线博弈经验的顶级游资。请根据以下数据，研判当前市场处于情绪周期的哪个阶段：
-        [混沌期、活跃期、分化期、退潮期] 选其一。
-        
-        [数据]：
-        成交：${review.totalVol}T，较昨日：${review.volDelta}亿。
-        情绪：涨停${review.limitUpTotal} / 跌停${review.limitDownTotal} / 炸板率${review.brokenRate}%。
-        梯队：5B+最高标[${review.ladder['5']?.stock}]。
-        龙头：[${review.dragon}] 状态[${review.dragonStatus}]。
-        
-        [要求]：
-        1. 输出格式：【周期结论】：阶段名。随后给出3句话以内的核心研判逻辑。
-        2. 逻辑必须硬核，涉及量能与连板接力的匹配度。
-      `;
-      const response = await ai.models.generateContent({
-        model: "gemini-3-pro-preview",
-        contents: prompt
-      });
-      
-      const result = response.text || "";
-      const stageMatch = result.match(/【周期结论】：(混沌期|活跃期|分化期|退潮期)/);
-      const stage = stageMatch ? stageMatch[1] : "混沌期";
-      
-      setReview(prev => ({ 
-        ...prev, 
-        stage: stage,
-        aiAnalysis: `【周期深度研判】\n${result}\n\n--- 历史分析记录 ---\n${prev.aiAnalysis}`
-      }));
-    } catch (e) {
-      alert("周期研判失败。");
-    } finally {
-      setIsLoading(false);
-    }
+      const prompt = `分析情绪周期：成交${review.totalVol}T, 涨跌停${review.limitUpTotal}/${review.limitDownTotal}, 龙头[${review.dragon}]。给出【周期结论】：混沌期/活跃期/分化期/退潮期。`;
+      const response = await ai.models.generateContent({ model: "gemini-3-pro-preview", contents: prompt });
+      const res = response.text || "";
+      const stage = res.match(/【周期结论】：(混沌期|活跃期|分化期|退潮期)/)?.[1] || "混沌期";
+      setReview(prev => ({ ...prev, stage, aiAnalysis: `【周期研判结论】: ${res}\n\n${prev.aiAnalysis}` }));
+    } catch (e) { alert("周期研判异常"); } finally { setIsLoading(false); }
   };
 
-  const callAI = async (target?: { type: 'stock' | 'sentiment' | 'optimization', name?: string, role?: string }) => {
+  const callAI = async () => {
     if (isLoading) return;
     setIsLoading(true);
-    setStatusMsg("正在调动 AI 指挥官进行全维度信仰研判...");
+    setStatusMsg("AI指挥官生成实战策略中...");
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      
-      const persistenceText = persistentSectors.length > 0 
-        ? `【主线持续性监控】：发现板块 ${persistentSectors.map(([n, c]) => `[${n}](5日内出现${c}次)`).join(', ')}。这些可能为近期真正的核心主线。` 
-        : "【主线持续性监控】：暂无明显重复出现的主线板块。";
-
-      const prompt = `
-        作为资深游资指挥官，请针对 ${review.date} 盘面进行深度信仰研判。
-        
-        [实时数据情况]：
-        指数收盘数值：${review.indices.map(i => `${i.name}:${i.value}`).join(', ')}
-        全场成交：${review.totalVol}T，较昨日：${review.volDelta > 0 ? '+' : ''}${review.volDelta}亿。
-        情绪：涨停 ${review.limitUpTotal} / 跌停 ${review.limitDownTotal} / 炸板率 ${review.brokenRate}%。
-        [核心标的]：总龙[${review.dragon}]，中军[${review.midArmy}]。
-        [梯队状态]：最高标[${review.ladder['5']?.stock || '无'}]。
-        [周期定性]：${review.stage}。
-        
-        ${persistenceText}
-        
-        [研判任务]：
-        1. 必须针对今日各指数收盘数值所对应的关键位支撑/压力，以及上述“高持续性板块”进行深度研判。
-        2. 结合今日评分 ${review.score}/100，给出明日具体的信仰博弈策略。
-        3. 产出具体的买入、锁仓或止损卖出的实战指南。
-        4. 【策略标签要求】：在给出实战操作建议时，必须针对每条核心操作，明确标注策略类型标签。
-           可选标签：【追涨】、【低吸】、【潜伏】、【反包】。
-      `;
-
-      const response = await ai.models.generateContent({
-        model: "gemini-3-pro-preview",
-        contents: prompt
-      });
+      const prompt = `复盘时间:${review.date}。周期:${review.stage}。核心龙:[${review.dragon}]。成交${review.totalVol}T。请给出买入、卖出建议，使用【追涨】【低吸】【反包】【潜伏】标签。`;
+      const response = await ai.models.generateContent({ model: "gemini-3-pro-preview", contents: prompt });
       setReview(prev => ({ ...prev, aiAnalysis: response.text || "" }));
-    } catch (e) {
-      setReview(prev => ({ ...prev, aiAnalysis: "指挥官研判超时，请重试。" }));
-    } finally {
-      setIsLoading(false);
-    }
+    } catch (e) { alert("策略生成异常"); } finally { setIsLoading(false); }
   };
 
-  // 渲染格式化后的 AI 分析文本
   const renderFormattedAnalysis = (text: string) => {
     if (!text) return null;
-    
-    const lines = text.split('\n');
-    return lines.map((line, idx) => {
-      // 匹配标签模式 【XXX】
+    return text.split('\n').map((line, idx) => {
       const labelRegex = /(【[^】]+】)/g;
       const parts = line.split(labelRegex);
-      
       return (
-        <div key={idx} className="mb-2 leading-relaxed text-[13px]">
+        <div key={idx} className="mb-2 leading-relaxed">
           {parts.map((part, pIdx) => {
             if (part.startsWith('【') && part.endsWith('】')) {
               const label = part.slice(1, -1);
-              let colorClasses = "bg-gray-500/10 border-gray-500/30 text-gray-400"; // 默认
-
-              if (label === '追涨') colorClasses = "bg-red-500/20 border-red-500/30 text-red-400";
-              if (label === '低吸') colorClasses = "bg-blue-500/20 border-blue-500/30 text-blue-400";
-              if (label === '潜伏') colorClasses = "bg-emerald-500/20 border-emerald-500/30 text-emerald-400";
-              if (label === '反包') colorClasses = "bg-yellow-500/20 border-yellow-500/30 text-yellow-400";
-              if (label === '核心建议' || label === '重要要求') colorClasses = "bg-purple-500/20 border-purple-500/30 text-purple-400";
-              if (label === '周期结论') colorClasses = "bg-indigo-500/20 border-indigo-500/30 text-indigo-400";
-
-              return (
-                <span key={pIdx} className={`inline-block px-2 py-0.5 rounded-lg border text-[10px] font-black mr-2 uppercase tracking-tighter ${colorClasses}`}>
-                  {label}
-                </span>
-              );
+              let color = "bg-gray-500/10 border-gray-500/30 text-gray-400";
+              if (label === '追涨') color = "bg-red-500/20 border-red-500/30 text-red-400";
+              if (label === '低吸') color = "bg-blue-500/20 border-blue-500/30 text-blue-400";
+              if (label === '潜伏') color = "bg-emerald-500/20 border-emerald-500/30 text-emerald-400";
+              if (label === '反包') color = "bg-yellow-500/20 border-yellow-500/30 text-yellow-400";
+              if (label === '周期结论') color = "bg-indigo-500/20 border-indigo-500/30 text-indigo-400";
+              return <span key={pIdx} className={`px-2 py-0.5 rounded border text-[10px] font-black mr-2 ${color}`}>{label}</span>;
             }
-            return <span key={pIdx}>{part}</span>;
+            return <span key={pIdx} className="text-gray-300 text-sm">{part}</span>;
           })}
         </div>
       );
@@ -397,176 +215,134 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen pb-20 bg-[#0a0a0c] text-[#e2e8f0] font-sans selection:bg-red-500/30">
-      <header className="sticky top-0 z-[100] glass border-b border-white/5 h-16 flex items-center px-8 justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-red-800 rounded-xl flex items-center justify-center shadow-lg shadow-red-600/20">
-            <Flame className="text-white fill-white" size={22} />
-          </div>
-          <div className="flex flex-col text-left">
-            <h1 className="text-xl font-black tracking-tighter leading-none bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">龙头信仰 <span className="text-xs text-red-500 ml-1 font-bold">V27.5 PRO</span></h1>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-[10px] font-bold text-gray-500 tracking-[0.1em] uppercase">Ground Truth Terminal</span>
+    <div className="min-h-screen bg-[#060608] text-[#d1d5db] font-sans">
+      {/* Header */}
+      <header className="sticky top-0 z-[100] bg-black/50 backdrop-blur-xl border-b border-white/5 h-16 flex items-center px-8 justify-between shadow-2xl">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 group cursor-default">
+            <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center shadow-lg shadow-red-600/20 group-hover:rotate-12 transition-transform">
+              <Flame size={18} className="text-white fill-white" />
+            </div>
+            <div>
+              <h1 className="text-lg font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">龙头信仰 <span className="text-red-500 text-[10px]">V28.0 PRO</span></h1>
+              <div className="flex items-center gap-1.5 -mt-1">
+                <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-[9px] font-black text-gray-500 uppercase">Decision terminal</span>
+              </div>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/10 group hover:border-red-500/30 transition-all">
-            <Calendar size={14} className="text-gray-500 group-hover:text-red-500 transition-colors" />
-            <input 
-              type="date" 
-              value={review.date} 
-              onChange={e => setReview({...review, date: e.target.value})} 
-              className="bg-transparent border-none text-[11px] font-mono font-bold outline-none text-gray-300 cursor-pointer" 
-            />
+          <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-xl border border-white/10">
+            <Calendar size={12} className="text-gray-500" />
+            <input type="date" value={review.date} onChange={e => setReview({...review, date: e.target.value})} className="bg-transparent border-none text-[11px] font-black outline-none text-gray-300" />
           </div>
-
-          <div className="h-8 w-[1px] bg-white/10"></div>
-          
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setShowFileManager(!showFileManager)} 
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[11px] font-black transition-all border ${uploadedFiles.length > 0 ? 'bg-blue-600/20 border-blue-500 text-blue-400' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}
-            >
-              <FileUp size={14} /> {uploadedFiles.length > 0 ? `已加载 ${uploadedFiles.length} 信源` : '上传原始信源'}
+          <div className="flex gap-2">
+            <button onClick={() => setShowFileManager(true)} className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[11px] font-black flex items-center gap-2 transition-all">
+              <FileUp size={14} /> 信源库
             </button>
-            <button onClick={autoFillMarketData} disabled={isLoading || uploadedFiles.length === 0} className="group flex items-center gap-2 px-5 py-2.5 bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-2xl text-[11px] font-black transition-all active:scale-95 disabled:opacity-50">
-              {isLoading ? <RefreshCcw className="animate-spin" size={14} /> : <DatabaseZap size={14} />} AI 自动填充
-            </button>
-            <button onClick={handleSave} className="flex items-center gap-2 px-6 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-2xl text-[11px] font-black transition-all active:scale-95 shadow-xl shadow-red-600/20">
-              <Save size={14} /> 归档复盘
+            <button onClick={handleSave} className="px-5 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-[11px] font-black shadow-lg shadow-red-600/30 flex items-center gap-2 transition-all">
+              <Save size={14} /> 存档记录
             </button>
           </div>
         </div>
       </header>
 
-      {showFileManager && (
-        <div className="fixed inset-0 z-[150] bg-black/80 backdrop-blur-md flex items-center justify-center p-6">
-          <div className="w-full max-w-4xl bg-[#121215] border border-white/10 rounded-[3rem] p-10 shadow-2xl relative">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-4 text-left">
-                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-                  <FileUp className="text-blue-500" size={24} />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-black text-white uppercase tracking-tight">信源文件池</h3>
-                  <p className="text-xs text-gray-500 font-bold uppercase mt-1">Multi-Source Analysis Pool</p>
-                </div>
-              </div>
-              <button onClick={() => setShowFileManager(false)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-all">
-                <X size={20} className="text-gray-400" />
-              </button>
-            </div>
-            <div className="grid grid-cols-12 gap-8">
-              <div className="col-span-4">
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="aspect-square border-2 border-dashed border-white/10 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-blue-500/40 hover:bg-blue-500/5 transition-all text-center group"
-                >
-                  <Upload size={32} className="text-blue-500 group-hover:scale-110 transition-transform" />
-                  <span className="block text-sm font-black text-white">点击上传截图/报表</span>
-                  <input type="file" ref={fileInputRef} multiple onChange={handleFileChange} className="hidden" accept="image/*,.pdf,.txt" />
-                </div>
-              </div>
-              <div className="col-span-8 flex flex-col">
-                <div className="flex-1 bg-black/40 border border-white/5 rounded-[2.5rem] p-6 h-[400px] overflow-y-auto custom-scrollbar">
-                  {uploadedFiles.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-gray-700 opacity-40">
-                      <FileText size={48} className="mb-4" />
-                      <p className="text-xs font-bold uppercase tracking-widest">暂无文件上传</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-4">
-                      {uploadedFiles.map((file, i) => (
-                        <div key={i} className="group bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center gap-4 hover:border-blue-500/40 transition-all relative">
-                          <div className="w-12 h-12 rounded-xl bg-black/40 overflow-hidden border border-white/5 flex items-center justify-center">
-                            {file.preview ? <img src={file.preview} className="w-full h-full object-cover" /> : <FileText size={20} className="text-blue-400" />}
-                          </div>
-                          <p className="text-xs font-black text-gray-300 truncate text-left flex-1">{file.name}</p>
-                          <button onClick={() => removeFile(i)} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-xl shadow-red-500/30"><X size={12} /></button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <button onClick={autoFillMarketData} disabled={isLoading || uploadedFiles.length === 0} className="mt-8 px-12 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-black transition-all shadow-2xl shadow-emerald-600/30 active:scale-95 disabled:opacity-50 self-end">立即启动 AI 数据填充</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <main className="max-w-[1780px] mx-auto px-8 mt-10">
-        <div className="grid grid-cols-12 gap-8">
+      {/* Main Content */}
+      <main className="max-w-[1720px] mx-auto px-8 py-10">
+        <div className="grid grid-cols-12 gap-10">
           
-          <div className="col-span-12 xl:col-span-4 space-y-8 text-left">
-            <section className="glass rounded-[2.5rem] p-8 border-l-[8px] border-red-500 shadow-2xl">
-              <div className="flex items-center gap-3 mb-8">
-                <Activity className="text-red-500" size={20} />
-                <h2 className="font-black text-sm uppercase tracking-[0.2em] text-gray-400">01 宏观数据概览</h2>
+          {/* Column Left: Input & Data (Macro to Logic) */}
+          <div className="col-span-12 xl:col-span-4 space-y-10">
+            
+            {/* 01 Macro Indices */}
+            <section className="relative">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center text-gray-500 text-xs font-black border border-white/10">01</div>
+                <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500">宏观指数数据</h2>
               </div>
-              <div className="grid grid-cols-4 gap-3.5 mb-8">
+              <div className="grid grid-cols-4 gap-3">
                 {review.indices.map((idx, i) => (
-                  <div key={i} className="bg-white/5 border border-white/5 p-4 rounded-[1.2rem] text-center group hover:bg-white/10 transition-all flex flex-col justify-center min-h-[80px]">
-                    <div className="text-[10px] text-gray-500 font-black mb-2 uppercase">{idx.name}</div>
+                  <div key={i} className="bg-white/[0.03] border border-white/5 p-3 rounded-xl flex flex-col items-center justify-center group hover:bg-white/5 transition-all">
+                    <span className="text-[9px] font-black text-gray-600 mb-1">{idx.name}</span>
                     <input 
-                      type="number" 
-                      step="0.01" 
-                      value={idx.value} 
-                      onChange={e => {
-                        const ni = [...review.indices]; 
-                        ni[i].value = +e.target.value; 
-                        setReview({...review, indices: ni});
-                      }} 
-                      placeholder="点位数值"
-                      className="bg-transparent w-full text-center text-[15px] font-black text-white outline-none placeholder:text-gray-700" 
+                      type="number" step="0.01" value={idx.value} 
+                      onChange={e => { const ni = [...review.indices]; ni[i].value = +e.target.value; setReview({...review, indices: ni}); }}
+                      className="bg-transparent w-full text-center text-sm font-black text-white outline-none placeholder:text-gray-800"
+                      placeholder="点位"
                     />
                   </div>
                 ))}
               </div>
-              <div className="grid grid-cols-2 gap-6 p-6 bg-white/5 rounded-[1.5rem] border border-white/5">
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black text-gray-500 uppercase flex items-center gap-2"><BarChart3 size={12}/> 成交量 (万亿)</label>
+            </section>
+
+            {/* 02 Market Sentiment Dash */}
+            <section className="bg-white/[0.02] rounded-3xl p-6 border border-white/5 space-y-6">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center text-gray-500 text-xs font-black border border-white/10">02</div>
+                <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500">市场情绪计速器</h2>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-red-500/5 border border-red-500/10 p-5 rounded-2xl flex flex-col">
+                  <span className="text-[10px] font-black text-red-500/60 uppercase mb-1">今日涨停</span>
+                  <input type="number" value={review.limitUpTotal} onChange={e => setReview({...review, limitUpTotal: +e.target.value})} className="bg-transparent text-3xl font-black text-red-500 outline-none w-full" />
+                </div>
+                <div className="bg-green-500/5 border border-green-500/10 p-5 rounded-2xl flex flex-col">
+                  <span className="text-[10px] font-black text-green-500/60 uppercase mb-1">今日跌停</span>
+                  <input type="number" value={review.limitDownTotal} onChange={e => setReview({...review, limitDownTotal: +e.target.value})} className="bg-transparent text-3xl font-black text-green-500 outline-none w-full" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-500 flex items-center gap-2"><BarChart3 size={10}/> 成交额(万亿)</label>
                   <input type="number" step="0.01" value={review.totalVol} onChange={e => setReview({...review, totalVol: +e.target.value})} className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 w-full text-sm font-black text-red-500 outline-none" />
                 </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black text-gray-500 uppercase flex items-center gap-2"><ArrowUpRight size={12}/> 增减 (亿)</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-500 flex items-center gap-2"><ArrowUpRight size={10}/> 增减(亿)</label>
                   <input type="number" value={review.volDelta} onChange={e => setReview({...review, volDelta: +e.target.value})} className={`bg-white/5 border border-white/10 rounded-xl px-4 py-3 w-full text-sm font-black outline-none ${review.volDelta >= 0 ? 'text-red-500' : 'text-blue-400'}`} />
                 </div>
               </div>
             </section>
 
-            <section className="glass rounded-[2.5rem] p-8 border-l-[8px] border-purple-500 shadow-2xl">
-              <div className="flex items-center gap-3 mb-8">
-                <Layers className="text-purple-500" size={20} />
-                <h2 className="font-black text-sm uppercase tracking-[0.2em] text-gray-400">02 主线逻辑识别</h2>
+            {/* 03 Main Logic Sectors */}
+            <section className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center text-gray-500 text-xs font-black border border-white/10">03</div>
+                <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500">题材主线识别</h2>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {review.topSectors.map((sector, i) => (
-                  <div key={i} className="bg-white/5 border border-white/5 p-6 rounded-[1.8rem] space-y-4">
+                  <div key={i} className="bg-white/[0.02] border border-white/5 p-5 rounded-2xl group hover:border-purple-500/20 transition-all">
                     <input placeholder="板块名称..." value={sector.name} onChange={e => {
-                      const ns = [...review.topSectors]; ns[i].name = e.target.value; setReview({...review, topSectors: ns});
-                    }} className="bg-transparent text-lg font-black outline-none w-full" />
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="bg-black/40 p-2 text-center rounded-xl border border-white/5">
-                        <span className="text-[9px] text-gray-600 block mb-1">涨跌%</span>
-                        <input type="number" value={sector.gain} step="0.1" onChange={e => {
-                          const ns = [...review.topSectors]; ns[i].gain = +e.target.value; setReview({...review, topSectors: ns});
-                        }} className="bg-transparent text-xs font-black text-red-500 outline-none w-full text-center" />
+                      const ns = [...review.topSectors]; 
+                      ns[i] = { ...ns[i], name: e.target.value }; 
+                      setReview({...review, topSectors: ns});
+                    }} className="bg-transparent text-sm font-black outline-none w-full mb-3" />
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-black/40 p-2 text-center rounded-lg border border-white/5">
+                        <span className="text-[8px] text-gray-600 block mb-1">涨幅%</span>
+                        <input type="number" step="0.1" value={sector.gain} onChange={e => { 
+                          const ns = [...review.topSectors]; 
+                          ns[i] = { ...ns[i], gain: +e.target.value }; 
+                          setReview({...review, topSectors: ns}); 
+                        }} className="bg-transparent text-[11px] font-black text-red-500 outline-none w-full text-center" />
                       </div>
-                      <div className="bg-black/40 p-2 text-center rounded-xl border border-white/5">
-                        <span className="text-[9px] text-gray-600 block mb-1">涨停#</span>
-                        <input type="number" value={sector.limitUps} onChange={e => {
-                          const ns = [...review.topSectors]; ns[i].limitUps = +e.target.value; setReview({...review, topSectors: ns});
-                        }} className="bg-transparent text-xs font-black text-white outline-none w-full text-center" />
+                      <div className="bg-black/40 p-2 text-center rounded-lg border border-white/5">
+                        <span className="text-[8px] text-gray-600 block mb-1">涨停数</span>
+                        <input type="number" value={sector.limitUps} onChange={e => { 
+                          const ns = [...review.topSectors]; 
+                          ns[i] = { ...ns[i], limitUps: +e.target.value }; 
+                          setReview({...review, topSectors: ns}); 
+                        }} className="bg-transparent text-[11px] font-black text-white outline-none w-full text-center" />
                       </div>
-                      <div className="bg-black/40 p-2 text-center rounded-xl border border-white/5">
-                        <span className="text-[9px] text-gray-600 block mb-1">量能亿</span>
-                        <input type="number" value={sector.volume} onChange={e => {
-                          const ns = [...review.topSectors]; ns[i].volume = +e.target.value; setReview({...review, topSectors: ns});
-                        }} className="bg-transparent text-xs font-black text-blue-400 outline-none w-full text-center" />
+                      <div className="bg-black/40 p-2 text-center rounded-lg border border-white/5">
+                        <span className="text-[8px] text-gray-600 block mb-1">量能亿</span>
+                        <input type="number" value={sector.volume} onChange={e => { 
+                          const ns = [...review.topSectors]; 
+                          ns[i] = { ...ns[i], volume: +e.target.value }; 
+                          setReview({...review, topSectors: ns}); 
+                        }} className="bg-transparent text-[11px] font-black text-blue-400 outline-none w-full text-center" />
                       </div>
                     </div>
                   </div>
@@ -575,185 +351,149 @@ const App = () => {
             </section>
           </div>
 
-          <div className="col-span-12 xl:col-span-8 space-y-8 text-left">
-            <section className="glass rounded-[2.5rem] p-10 border-l-[8px] border-blue-500 shadow-2xl">
-              <div className="flex items-center gap-3 mb-10">
-                <Scale className="text-blue-500" size={20} />
-                <h2 className="font-black text-sm uppercase tracking-[0.2em] text-gray-400">03 市场情绪 & 连板梯队</h2>
-              </div>
-              <div className="grid grid-cols-12 gap-8">
-                <div className="col-span-4 space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-red-500/5 border border-red-500/10 p-5 rounded-2xl">
-                      <span className="text-[10px] font-black text-red-500/60 block mb-1">今日涨停</span>
-                      <input type="number" value={review.limitUpTotal} onChange={e => setReview({...review, limitUpTotal: +e.target.value})} className="bg-transparent text-3xl font-black text-red-500 outline-none w-full" />
-                    </div>
-                    <div className="bg-green-500/5 border border-green-500/10 p-5 rounded-2xl">
-                      <span className="text-[10px] font-black text-green-500/60 block mb-1">今日跌停</span>
-                      <input type="number" value={review.limitDownTotal} onChange={e => setReview({...review, limitDownTotal: +e.target.value})} className="bg-transparent text-3xl font-black text-green-500 outline-none w-full" />
-                    </div>
-                  </div>
-                  <div className="bg-white/5 border border-white/5 p-4 rounded-2xl flex justify-between items-center">
-                    <span className="text-[11px] font-black text-gray-400">炸板率 %</span>
-                    <input type="number" value={review.brokenRate} onChange={e => setReview({...review, brokenRate: +e.target.value})} className="bg-transparent text-right font-black text-yellow-500 outline-none w-16" />
-                  </div>
+          {/* Column Right: Strategy & Execution (Ladder to AI) */}
+          <div className="col-span-12 xl:col-span-8 space-y-10">
+            
+            {/* Top Row: Ladder & Core */}
+            <div className="grid grid-cols-12 gap-10">
+              
+              {/* 04 Sentiment Ladder */}
+              <div className="col-span-12 lg:col-span-7 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center text-gray-500 text-xs font-black border border-white/10">04</div>
+                  <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500">连板晋级梯队</h2>
                 </div>
-                <div className="col-span-8 flex flex-col gap-3">
+                <div className="flex flex-col gap-3">
                   {['5', '4', '3', '2', '1'].map(lvl => (
                     <div key={lvl} className="flex gap-4 group">
-                      <div className="w-14 text-center py-3 rounded-xl border border-white/10 bg-white/5 text-xs font-black text-blue-400">{lvl === '5' ? '5B+' : lvl + 'B'}</div>
-                      <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-6 group-hover:bg-white/[0.08] transition-all">
-                        <input placeholder={`${lvl === '5' ? '最高标' : lvl + '板核心'}...`} value={review.ladder[lvl]?.stock} onChange={e => {
-                          const nl = {...review.ladder}; nl[lvl].stock = e.target.value; setReview({...review, ladder: nl});
-                        }} className="bg-transparent text-sm font-black text-white outline-none w-full" />
-                        <div className="flex items-center gap-4 min-w-[150px]">
-                          <span className="text-[10px] text-gray-600 font-bold">家数:</span>
-                          <input type="number" value={review.ladder[lvl]?.count} onChange={e => {
-                            const nl = {...review.ladder}; nl[lvl].count = +e.target.value; setReview({...review, ladder: nl});
-                          }} className="bg-transparent w-8 text-xs font-black text-blue-400 outline-none" />
-                          <span className="text-[10px] text-gray-600 font-bold ml-2">晋级:</span>
-                          <input type="number" value={review.ladder[lvl]?.promoRate} onChange={e => {
-                            const nl = {...review.ladder}; nl[lvl].promoRate = +e.target.value; setReview({...review, ladder: nl});
-                          }} className="bg-transparent w-8 text-xs font-black text-yellow-500 outline-none" />
+                      <div className={`w-14 h-12 flex items-center justify-center rounded-xl border font-black text-xs ${lvl === '5' ? 'bg-red-600/10 border-red-500/50 text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : 'bg-white/5 border-white/10 text-gray-500'}`}>
+                        {lvl === '5' ? '5B+' : `${lvl}B`}
+                      </div>
+                      <div className="flex-1 bg-white/[0.03] border border-white/5 rounded-xl p-3 flex items-center gap-4 hover:bg-white/5 transition-all">
+                        <input placeholder={`${lvl}B核心标的...`} value={review.ladder[lvl]?.stock} onChange={e => { const nl = {...review.ladder}; nl[lvl].stock = e.target.value; setReview({...review, ladder: nl}); }} className="bg-transparent text-xs font-black text-white outline-none w-full" />
+                        <div className="flex items-center gap-4 min-w-[120px]">
+                          <div className="flex flex-col">
+                            <span className="text-[8px] text-gray-600 font-black uppercase">家数</span>
+                            <input type="number" value={review.ladder[lvl]?.count} onChange={e => { const nl = {...review.ladder}; nl[lvl].count = +e.target.value; setReview({...review, ladder: nl}); }} className="bg-transparent text-[11px] font-black text-blue-400 outline-none" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[8px] text-gray-600 font-black uppercase">晋级%</span>
+                            <input type="number" value={review.ladder[lvl]?.promoRate} onChange={e => { const nl = {...review.ladder}; nl[lvl].promoRate = +e.target.value; setReview({...review, ladder: nl}); }} className="bg-transparent text-[11px] font-black text-yellow-500 outline-none" />
+                          </div>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
-            </section>
 
-            <div className="grid grid-cols-12 gap-8">
-               <section className="col-span-5 glass rounded-[2.5rem] p-8 border-l-[8px] border-yellow-500 shadow-2xl">
-                  <div className="flex items-center gap-3 mb-8">
-                    <Trophy className="text-yellow-500" size={20} />
-                    <h2 className="font-black text-sm uppercase tracking-[0.2em] text-gray-400">04 灵魂标的</h2>
+              {/* 05 Core Targets */}
+              <div className="col-span-12 lg:col-span-5 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center text-gray-500 text-xs font-black border border-white/10">05</div>
+                  <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500">灵魂标的监测</h2>
+                </div>
+                <div className="space-y-6">
+                  <div className="bg-gradient-to-br from-red-600/10 to-transparent border border-red-500/20 p-6 rounded-3xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/5 blur-[50px] group-hover:bg-red-600/10 transition-all"></div>
+                    <span className="text-[9px] font-black text-red-500 uppercase flex items-center gap-2 mb-3"><Trophy size={10}/> 情绪总龙头</span>
+                    <input value={review.dragon} onChange={e => setReview({...review, dragon: e.target.value})} className="bg-transparent w-full text-2xl font-black text-red-500 outline-none mb-4 relative z-10" placeholder="寻龙中..." />
+                    <select value={review.dragonStatus} onChange={e => setReview({...review, dragonStatus: e.target.value as any})} className="bg-black/40 text-[10px] font-black text-red-500 outline-none p-2 rounded-lg border border-red-500/20 w-full cursor-pointer hover:bg-black/60 transition-all">
+                      <option value="accelerate">一致加速</option>
+                      <option value="divergence">分歧转强</option>
+                      <option value="broken">破位退潮</option>
+                      <option value="revive">反包穿越</option>
+                    </select>
                   </div>
-                  <div className="space-y-6">
-                    <div className="bg-red-500/5 border border-red-500/10 p-6 rounded-[2rem] relative">
-                      <span className="text-[10px] font-black text-red-500 uppercase block mb-3">情绪总龙头</span>
-                      <input value={review.dragon} onChange={e => setReview({...review, dragon: e.target.value})} className="bg-transparent w-full text-2xl font-black text-red-500 outline-none mb-3" />
-                      <select value={review.dragonStatus} onChange={e => setReview({...review, dragonStatus: e.target.value as any})} className="bg-black/20 text-[11px] font-black text-red-500 outline-none p-2 rounded-xl border border-red-500/10 w-full cursor-pointer">
-                        <option value="accelerate">一致加速</option>
-                        <option value="divergence">分歧转强</option>
-                        <option value="broken">破位退潮</option>
-                        <option value="revive">反包穿越</option>
-                      </select>
-                    </div>
-                    <div className="bg-blue-500/5 border border-blue-500/10 p-6 rounded-[2rem]">
-                      <span className="text-[10px] font-black text-blue-500 uppercase block mb-3">趋势中军</span>
-                      <input value={review.midArmy} onChange={e => setReview({...review, midArmy: e.target.value})} className="bg-transparent w-full text-2xl font-black text-blue-500 outline-none" />
-                    </div>
+                  <div className="bg-white/[0.03] border border-white/5 p-6 rounded-3xl group hover:border-blue-500/20 transition-all">
+                    <span className="text-[9px] font-black text-blue-500 uppercase flex items-center gap-2 mb-3"><Radio size={10}/> 趋势中军</span>
+                    <input value={review.midArmy} onChange={e => setReview({...review, midArmy: e.target.value})} className="bg-transparent w-full text-2xl font-black text-blue-500 outline-none" placeholder="标杆核心..." />
                   </div>
-               </section>
-               <section className="col-span-7 glass rounded-[2.5rem] p-8 border-l-[8px] border-emerald-500 shadow-2xl">
-                  <div className="flex items-center gap-3 mb-8">
-                    <Crosshair className="text-emerald-500" size={20} />
-                    <h2 className="font-black text-sm uppercase tracking-[0.2em] text-gray-400">05 核心备选</h2>
-                  </div>
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                    {review.watchlist.map((stock, i) => (
-                      <div key={i} className="bg-[#121215] border border-white/5 p-4 rounded-[1.8rem]">
-                        <input placeholder="股票名" value={stock.name} onChange={e => updateWatchlist(i, 'name', e.target.value)} className="bg-transparent w-full text-xs font-black text-white outline-none mb-2 border-b border-white/5 pb-1" />
-                        <input placeholder="逻辑" value={stock.concept} onChange={e => updateWatchlist(i, 'concept', e.target.value)} className="bg-transparent w-full text-[9px] font-bold text-emerald-500/70 outline-none mb-2" />
-                        <textarea placeholder="计划..." value={stock.plan} onChange={e => updateWatchlist(i, 'plan', e.target.value)} className="bg-black/20 w-full text-[9px] h-12 p-2 rounded-xl text-gray-400 outline-none resize-none border border-white/5" />
-                      </div>
-                    ))}
-                  </div>
-               </section>
+                </div>
+              </div>
             </div>
 
-            <section className="glass rounded-[3rem] p-10 border border-purple-500/20 shadow-2xl">
-              <div className="flex items-center justify-between mb-8">
+            {/* 06 AI Decision Hub */}
+            <section className="bg-[#0c0c10] rounded-[2.5rem] border border-white/5 p-10 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent"></div>
+              
+              {/* Hub Header */}
+              <div className="flex items-center justify-between mb-10 relative z-10">
                 <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center text-white border border-white/20 shadow-2xl">
-                    <BrainCircuit size={32} />
+                  <div className="w-14 h-14 rounded-2xl bg-purple-600 flex items-center justify-center text-white shadow-xl shadow-purple-600/20">
+                    <Cpu size={28} />
                   </div>
                   <div className="flex flex-col">
                     <div className="flex items-center gap-3">
-                      <h2 className="text-2xl font-black text-white uppercase tracking-tighter">AI 指挥官·全维研判</h2>
-                      <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
-                        review.stage === '活跃期' ? 'bg-red-500/20 border-red-500/40 text-red-400' :
-                        review.stage === '退潮期' ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' :
-                        review.stage === '分化期' ? 'bg-yellow-500/20 border-yellow-500/40 text-yellow-400' :
-                        'bg-blue-500/20 border-blue-500/40 text-blue-400'
-                      }`}>
-                        {review.stage}
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest">Global Faith Decision Engine</span>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <button onClick={analyzeSentimentCycle} disabled={isLoading} className="px-6 py-4 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-2xl text-xs font-black transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2">
-                    <Waves size={16} /> 周期定性
-                  </button>
-                  <button onClick={() => callAI({type: 'optimization'})} disabled={isLoading} className="px-6 py-4 bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-2xl text-xs font-black transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2">
-                    <Wand2 size={16} /> 策略优化
-                  </button>
-                  <button onClick={() => callAI()} disabled={isLoading} className="px-6 py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl text-xs font-black shadow-xl shadow-purple-600/20 active:scale-95 disabled:opacity-50 flex items-center gap-2">
-                    <Zap size={16} /> 启动研判
-                  </button>
-                </div>
-              </div>
-
-              <div className="mb-8 p-6 bg-emerald-500/5 rounded-[2rem] border border-emerald-500/10">
-                <div className="flex items-center gap-3 mb-4">
-                   <Timer size={14} className="text-emerald-500" />
-                   <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">5日主线持续性监控 (出现≥2次)</span>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                   {persistentSectors.length > 0 ? (
-                      persistentSectors.map(([name, count]) => (
-                        <div key={name} className="flex items-center gap-3 bg-emerald-500/10 px-4 py-2 rounded-xl border border-emerald-500/20">
-                           <span className="text-xs font-black text-emerald-400">{name}</span>
-                           <span className="text-[10px] font-bold bg-emerald-500/20 px-1.5 rounded text-emerald-300">活跃{count}天</span>
+                      <h2 className="text-xl font-black text-white uppercase tracking-tight">AI 信仰决策终端</h2>
+                      {review.stage !== '待研判' && (
+                        <div className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${
+                          review.stage === '活跃期' ? 'bg-red-500/20 border-red-500/40 text-red-400' :
+                          review.stage === '退潮期' ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' :
+                          review.stage === '分化期' ? 'bg-yellow-500/20 border-yellow-500/40 text-yellow-400' :
+                          'bg-blue-500/20 border-blue-500/40 text-blue-400'
+                        }`}>
+                          {review.stage}
                         </div>
-                      ))
-                   ) : (
-                      <span className="text-[11px] text-gray-600 font-bold italic">暂无具有高持续性的观测板块...</span>
-                   )}
+                      )}
+                    </div>
+                    <span className="text-[10px] font-black text-purple-500 uppercase tracking-widest mt-1">Ground Truth Logic Engine</span>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3">
+                  <button onClick={analyzeSentimentCycle} disabled={isLoading} className="px-6 py-3 bg-white/5 hover:bg-white/10 text-indigo-400 border border-white/10 rounded-xl text-[11px] font-black flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50">
+                    <Waves size={14} /> 周期定性
+                  </button>
+                  <button onClick={callAI} disabled={isLoading} className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-[11px] font-black shadow-xl shadow-purple-600/20 flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50">
+                    <Zap size={14} /> 信仰研判
+                  </button>
                 </div>
               </div>
 
-              <div className="mb-8 p-8 bg-white/5 rounded-[2.5rem] border border-white/10 flex items-center gap-12 group transition-all hover:border-purple-500/30">
-                <div className="flex flex-col items-center border-r border-white/10 pr-12">
-                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.4em] mb-2">综合信仰分</span>
-                  <div className="flex items-baseline gap-1">
-                    <span className={`text-5xl font-black transition-all duration-500 ${review.score > 70 ? 'text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.4)]' : review.score > 40 ? 'text-yellow-500' : 'text-green-500'}`}>{review.score}</span>
-                    <span className="text-xs font-black text-gray-700">%</span>
+              {/* Sub Header info */}
+              <div className="grid grid-cols-2 gap-8 mb-8">
+                <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Timer size={12} className="text-emerald-500" />
+                    <span className="text-[9px] font-black text-emerald-500 uppercase">5日主线活跃度</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {persistentSectors.length > 0 ? persistentSectors.map(([name, count]) => (
+                      <span key={name} className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-md text-[10px] font-black text-emerald-400">
+                        {name} <span className="text-[8px] opacity-50 ml-1">{count}d</span>
+                      </span>
+                    )) : <span className="text-gray-600 text-[10px] italic font-bold">观测中...</span>}
                   </div>
                 </div>
-                <div className="flex-1 flex flex-col gap-4">
-                   <div className="flex items-center gap-6">
-                      <button onClick={() => setReview({...review, score: Math.max(0, review.score-5)})} className="w-12 h-12 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 font-black transition-all active:scale-90">-5</button>
-                      <div className="flex-1 h-3 bg-black/50 rounded-full border border-white/10 p-[2px] relative">
-                         <div className={`h-full transition-all duration-700 rounded-full ${review.score > 70 ? 'bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]' : review.score > 40 ? 'bg-yellow-500' : 'bg-green-500'}`} style={{ width: `${review.score}%` }}></div>
-                         <div className="absolute top-0 left-1/2 w-0.5 h-full bg-white/10"></div>
-                      </div>
-                      <button onClick={() => setReview({...review, score: Math.min(100, review.score+5)})} className="w-12 h-12 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 font-black transition-all active:scale-90">+5</button>
-                   </div>
-                   <div className="flex justify-between px-2 text-[9px] font-black text-gray-600 uppercase tracking-widest">
-                      <span>冰点/分歧</span>
-                      <span>主升/狂热</span>
-                   </div>
+                <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl flex items-center gap-10">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-black text-gray-600 uppercase mb-1">信仰分</span>
+                    <div className="flex items-baseline gap-1">
+                      <span className={`text-4xl font-black ${review.score > 70 ? 'text-red-500' : review.score > 40 ? 'text-yellow-500' : 'text-emerald-500'}`}>{review.score}</span>
+                      <span className="text-[10px] text-gray-700 font-black">%</span>
+                    </div>
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <input type="range" min="0" max="100" value={review.score} onChange={e => setReview({...review, score: +e.target.value})} className="w-full accent-purple-600" />
+                    <div className="flex justify-between text-[8px] font-black text-gray-700 uppercase"><span>冰点</span><span>博弈</span><span>主升</span></div>
+                  </div>
                 </div>
               </div>
-              
-              <div className="bg-black/40 rounded-[2.5rem] border border-white/5 p-8 custom-scrollbar min-h-[400px] relative backdrop-blur-sm">
+
+              {/* Terminal Area */}
+              <div className="bg-black/60 rounded-3xl border border-white/5 p-8 min-h-[400px] relative font-mono">
                 {isLoading && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0c]/80 backdrop-blur-xl z-[150] rounded-[2.5rem]">
-                     <RefreshCcw className="animate-spin text-purple-500 mb-6" size={48} />
-                     <span className="text-sm font-black text-purple-400 uppercase tracking-widest">{statusMsg}</span>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0c0c10]/90 z-20 rounded-3xl">
+                    <RefreshCcw className="animate-spin text-purple-500 mb-4" size={40} />
+                    <span className="text-[10px] font-black text-purple-400 uppercase tracking-[0.2em]">{statusMsg}</span>
                   </div>
                 )}
-                <div className="prose prose-invert max-w-none font-sans text-gray-300">
-                  {review.aiAnalysis ? (
-                    renderFormattedAnalysis(review.aiAnalysis)
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-24 opacity-30">
-                      <ShieldAlert size={64} className="mb-6" />
-                      <p className="italic font-bold tracking-widest uppercase text-center">上传文件并填充数据，启动 AI 指挥官综合研判</p>
+                <div className="relative">
+                   {review.aiAnalysis ? renderFormattedAnalysis(review.aiAnalysis) : (
+                    <div className="flex flex-col items-center justify-center py-20 opacity-20">
+                      <MessageSquareCode size={48} className="mb-4" />
+                      <p className="text-[10px] font-black uppercase tracking-widest">Awaiting Command Input...</p>
                     </div>
                   )}
                 </div>
@@ -762,31 +502,89 @@ const App = () => {
           </div>
         </div>
 
-        <section className="mt-20 border-t border-white/5 pt-16 pb-32 text-left">
-          <div className="flex items-center gap-5 mb-12 px-2">
-            <History className="text-gray-500" size={24} />
-            <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">信仰档案库</h2>
+        {/* Archives */}
+        <section className="mt-24 border-t border-white/5 pt-16 pb-32">
+          <div className="flex items-center gap-4 mb-10">
+            <History size={24} className="text-gray-600" />
+            <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">信仰记录存档</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6">
             {history.map((h) => (
-              <div key={h.date} onClick={() => setReview(h)} className={`p-8 rounded-[2.5rem] border transition-all cursor-pointer h-64 flex flex-col justify-between relative overflow-hidden ${review.date === h.date ? 'bg-red-600/10 border-red-500' : 'bg-[#121215] border-white/5 hover:border-white/20'}`}>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono font-black text-gray-600">{h.date}</span>
-                  {review.date === h.date && <div className="p-1 bg-red-500 rounded text-white"><CheckCircle2 size={12} /></div>}
+              <div key={h.date} onClick={() => setReview(h)} className={`p-6 rounded-3xl border cursor-pointer transition-all hover:scale-[1.02] flex flex-col justify-between h-48 relative overflow-hidden ${review.date === h.date ? 'bg-red-600/10 border-red-500' : 'bg-white/[0.02] border-white/5 hover:border-white/10'}`}>
+                <div className="flex justify-between items-start">
+                  <span className="text-[10px] font-black text-gray-600">{h.date}</span>
+                  <div className={`w-1.5 h-1.5 rounded-full ${h.score > 60 ? 'bg-red-500' : 'bg-emerald-500'}`}></div>
                 </div>
                 <div className="flex flex-col">
-                  <span className={`text-5xl font-black ${review.date === h.date ? 'text-red-500' : 'text-white'}`}>{h.score}</span>
-                  <span className="text-[11px] font-black text-red-500/80 uppercase truncate mt-4">{h.dragon || '无高度标'}</span>
+                   <span className="text-4xl font-black text-white mb-2">{h.score}<span className="text-[10px] opacity-30">%</span></span>
+                   <span className="text-[11px] font-black text-red-500 truncate">{h.dragon || '无龙复盘'}</span>
                 </div>
-                <div className="border-t border-white/5 pt-5 text-[10px] text-gray-600 flex justify-between uppercase font-black">
-                  <span>涨停:{h.limitUpTotal}</span>
-                  <span>成交:{h.totalVol}T</span>
+                <div className="flex justify-between items-center text-[9px] font-black text-gray-600 uppercase border-t border-white/5 pt-3">
+                  <span>Vol: {h.totalVol}T</span>
+                  <span>{h.stage}</span>
                 </div>
               </div>
             ))}
           </div>
         </section>
       </main>
+
+      {/* File Manager Popup */}
+      {showFileManager && (
+        <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-xl flex items-center justify-center p-8">
+          <div className="w-full max-w-5xl bg-[#0c0c10] border border-white/10 rounded-[3rem] p-10 relative">
+            <button onClick={() => setShowFileManager(false)} className="absolute top-8 right-8 w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-all text-gray-500 hover:text-white">
+              <X size={20} />
+            </button>
+            <div className="flex items-center gap-6 mb-12">
+              <div className="w-16 h-16 rounded-2xl bg-indigo-600/10 flex items-center justify-center border border-indigo-500/20 text-indigo-500 shadow-xl">
+                <DatabaseZap size={32} />
+              </div>
+              <div>
+                <h3 className="text-3xl font-black text-white uppercase tracking-tight">信源文件池</h3>
+                <p className="text-xs text-gray-500 font-black uppercase mt-1 tracking-widest">Analysis Resource Pool</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-12 gap-10">
+              <div className="col-span-4">
+                <div onClick={() => fileInputRef.current?.click()} className="aspect-square border-2 border-dashed border-white/10 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-indigo-500/40 hover:bg-indigo-500/5 transition-all text-center group">
+                  <div className="w-14 h-14 bg-indigo-500/10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <FileUp size={28} className="text-indigo-500" />
+                  </div>
+                  <span className="text-sm font-black text-white">注入复盘数据源</span>
+                  <input type="file" ref={fileInputRef} multiple onChange={handleFileChange} className="hidden" accept="image/*,.pdf,.txt" />
+                </div>
+              </div>
+              <div className="col-span-8 flex flex-col">
+                <div className="flex-1 bg-black/40 border border-white/5 rounded-[2.5rem] p-8 h-[400px] overflow-y-auto custom-scrollbar">
+                  {uploadedFiles.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-gray-800 opacity-30">
+                      <Radio size={48} className="mb-4" />
+                      <p className="text-xs font-black uppercase tracking-widest">No active source feeds</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                      {uploadedFiles.map((f, i) => (
+                        <div key={i} className="group bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center gap-4 hover:border-indigo-500/40 relative transition-all">
+                          <div className="w-12 h-12 rounded-xl bg-black/40 overflow-hidden border border-white/5 flex items-center justify-center">
+                            {f.preview ? <img src={f.preview} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity" /> : <DatabaseZap size={20} className="text-indigo-400" />}
+                          </div>
+                          <p className="text-[11px] font-black text-gray-400 truncate flex-1 uppercase tracking-tighter">{f.name}</p>
+                          <button onClick={() => setUploadedFiles(prev => prev.filter((_, idx) => idx !== i))} className="w-6 h-6 bg-red-500/80 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg"><X size={12}/></button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex justify-end mt-10">
+                  <button onClick={autoFillMarketData} disabled={isLoading || uploadedFiles.length === 0} className="px-10 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-black transition-all shadow-2xl shadow-emerald-600/30 active:scale-95 disabled:opacity-50">开始解构并填充复盘</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
