@@ -9,6 +9,10 @@ import {
   ChevronDown, MessageSquareCode, Radio, Cpu
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, 
+  ResponsiveContainer, AreaChart, Area, BarChart, Bar, Legend, Cell
+} from 'recharts';
 
 // --- Types & Constants ---
 const STORAGE_KEY = 'dragon_faith_system_v28_0';
@@ -57,6 +61,7 @@ interface MarketReview {
   score: number;
   stage: string; 
   aiAnalysis: string;
+  customKeywords: string;
 }
 
 const INITIAL_REVIEW: MarketReview = {
@@ -89,6 +94,7 @@ const INITIAL_REVIEW: MarketReview = {
   dragon: '', dragonStatus: 'accelerate', midArmy: '',
   watchlist: Array(6).fill({ name: '', concept: '', plan: '' }),
   score: 50, stage: '待研判', aiAnalysis: '',
+  customKeywords: '',
 };
 
 const App = () => {
@@ -169,7 +175,26 @@ const App = () => {
     setStatusMsg("正在研判情绪周期阶段...");
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const prompt = `分析情绪周期：成交${review.totalVol}T, 涨跌停${review.limitUpTotal}/${review.limitDownTotal}, 龙头[${review.dragon}]。给出【周期结论】：混沌期/活跃期/分化期/退潮期。`;
+      
+      const ladderSummary = (Object.entries(review.ladder) as [string, typeof review.ladder[string]][])
+        .filter(([_, data]) => data.stock || data.count > 0)
+        .sort((a, b) => Number(b[0]) - Number(a[0]))
+        .map(([lvl, data]) => `${lvl}板: ${data.stock || '无'}(${data.count}家, 晋级率${data.promoRate}%)`)
+        .join('; ');
+
+      const prompt = `你是一个精通A股短线情绪周期的专家。请根据以下数据进行深度研判：
+1. 市场成交：${review.totalVol}T (较昨日增减: ${review.volDelta}亿)
+2. 涨跌表现：涨停${review.limitUpTotal}家，跌停${review.limitDownTotal}家，炸板率${review.brokenRate}%
+3. 核心标的：龙头[${review.dragon}] (状态: ${review.dragonStatus})，中军[${review.midArmy}]
+4. 连板梯队：${ladderSummary || '无明显梯队'}
+5. 用户关注/策略偏好：${review.customKeywords || '无'}
+
+请按以下格式输出：
+【情绪拆解】：(详细分析当前市场多空博弈情况，结合成交量和涨跌停家数)
+【龙头点评】：(针对${review.dragon}及其${review.dragonStatus}状态对板块及市场情绪的影响进行分析)
+【周期结论】：(必须从以下选项中选择一个：混沌期/活跃期/分化期/退潮期)
+【操作建议】：(基于当前周期阶段的简短策略建议)`;
+
       const response = await ai.models.generateContent({ model: "gemini-3-pro-preview", contents: prompt });
       const res = response.text || "";
       const stage = res.match(/【周期结论】：(混沌期|活跃期|分化期|退潮期)/)?.[1] || "混沌期";
@@ -183,7 +208,7 @@ const App = () => {
     setStatusMsg("AI指挥官生成实战策略中...");
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const prompt = `复盘时间:${review.date}。周期:${review.stage}。核心龙:[${review.dragon}]。成交${review.totalVol}T。请给出买入、卖出建议，使用【追涨】【低吸】【反包】【潜伏】标签。`;
+      const prompt = `复盘时间:${review.date}。周期:${review.stage}。核心龙:[${review.dragon}]。成交${review.totalVol}T。${review.customKeywords ? `用户特别关注/策略偏好: ${review.customKeywords}。` : ''}请给出买入、卖出建议，使用【追涨】【低吸】【反包】【潜伏】标签。`;
       const response = await ai.models.generateContent({ model: "gemini-3-pro-preview", contents: prompt });
       setReview(prev => ({ ...prev, aiAnalysis: response.text || "" }));
     } catch (e) { alert("策略生成异常"); } finally { setIsLoading(false); }
@@ -451,6 +476,21 @@ const App = () => {
                 </div>
               </div>
 
+              {/* Focus Area Input */}
+              <div className="mb-8 relative z-10">
+                <div className="flex items-center gap-2 mb-3">
+                  <Wand2 size={12} className="text-purple-400" />
+                  <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest">AI 指导关键词 / 关注领域</span>
+                </div>
+                <input 
+                  type="text" 
+                  value={review.customKeywords} 
+                  onChange={e => setReview({...review, customKeywords: e.target.value})}
+                  placeholder="例如：关注低位补涨、半导体国产替代、核心龙头分歧机会..."
+                  className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-xs font-medium text-gray-300 outline-none focus:border-purple-500/50 transition-all placeholder:text-gray-700"
+                />
+              </div>
+
               {/* Sub Header info */}
               <div className="grid grid-cols-2 gap-8 mb-8">
                 <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl">
@@ -501,6 +541,114 @@ const App = () => {
             </section>
           </div>
         </div>
+
+        {/* Data Visualization Section */}
+        <section className="mt-24 space-y-10">
+          <div className="flex items-center gap-4 mb-10">
+            <BarChart3 size={24} className="text-purple-500" />
+            <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">信仰数据可视化</h2>
+          </div>
+
+          {history.length < 2 ? (
+            <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-20 flex flex-col items-center justify-center text-center">
+              <Activity size={48} className="text-gray-800 mb-4" />
+              <p className="text-gray-600 font-black uppercase tracking-widest text-xs">需要至少2条历史记录以生成趋势图表</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-12 gap-10">
+              {/* Volume & Sentiment Trend */}
+              <div className="col-span-12 lg:col-span-8 bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-purple-500 uppercase tracking-widest">Market Liquidity & Sentiment</span>
+                    <h3 className="text-lg font-black text-white">成交量与涨跌停趋势</h3>
+                  </div>
+                </div>
+                <div className="h-[350px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={[...history].reverse()}>
+                      <defs>
+                        <linearGradient id="colorVol" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                      <XAxis dataKey="date" stroke="#4b5563" fontSize={10} tickLine={false} axisLine={false} />
+                      <YAxis stroke="#4b5563" fontSize={10} tickLine={false} axisLine={false} />
+                      <RechartsTooltip 
+                        contentStyle={{ backgroundColor: '#0c0c10', border: '1px solid #ffffff10', borderRadius: '12px', fontSize: '10px' }}
+                        itemStyle={{ fontWeight: 'bold' }}
+                      />
+                      <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '20px' }} />
+                      <Area type="monotone" dataKey="totalVol" name="成交额(T)" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorVol)" strokeWidth={3} />
+                      <Line type="monotone" dataKey="limitUpTotal" name="涨停数" stroke="#ef4444" strokeWidth={2} dot={{ r: 4, fill: '#ef4444' }} />
+                      <Line type="monotone" dataKey="limitDownTotal" name="跌停数" stroke="#22c55e" strokeWidth={2} dot={{ r: 4, fill: '#22c55e' }} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Sector Frequency */}
+              <div className="col-span-12 lg:col-span-4 bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8">
+                <div className="flex flex-col mb-8">
+                  <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Hot Sector Rotation</span>
+                  <h3 className="text-lg font-black text-white">题材活跃频次</h3>
+                </div>
+                <div className="h-[350px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart layout="vertical" data={persistentSectors.slice(0, 8).map(([name, count]) => ({ name, count }))}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" horizontal={false} />
+                      <XAxis type="number" hide />
+                      <YAxis dataKey="name" type="category" stroke="#9ca3af" fontSize={10} width={60} tickLine={false} axisLine={false} />
+                      <RechartsTooltip 
+                        cursor={{ fill: '#ffffff05' }}
+                        contentStyle={{ backgroundColor: '#0c0c10', border: '1px solid #ffffff10', borderRadius: '12px', fontSize: '10px' }}
+                      />
+                      <Bar dataKey="count" name="活跃天数" radius={[0, 4, 4, 0]}>
+                        {persistentSectors.map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={index === 0 ? '#ef4444' : '#8b5cf6'} fillOpacity={0.8 - (index * 0.08)} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Index Performance */}
+              <div className="col-span-12 bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8">
+                <div className="flex flex-col mb-8">
+                  <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Benchmark Performance</span>
+                  <h3 className="text-lg font-black text-white">主要指数走势对比</h3>
+                </div>
+                <div className="h-[400px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={[...history].reverse().map(h => {
+                      const row: any = { date: h.date };
+                      h.indices.forEach(idx => {
+                        if (['上证', '创业', '科创'].includes(idx.name)) {
+                          row[idx.name] = idx.value;
+                        }
+                      });
+                      return row;
+                    })}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" />
+                      <XAxis dataKey="date" stroke="#4b5563" fontSize={10} tickLine={false} />
+                      <YAxis stroke="#4b5563" fontSize={10} tickLine={false} domain={['auto', 'auto']} />
+                      <RechartsTooltip 
+                        contentStyle={{ backgroundColor: '#0c0c10', border: '1px solid #ffffff10', borderRadius: '12px', fontSize: '10px' }}
+                      />
+                      <Legend iconType="rect" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '20px' }} />
+                      <Line type="monotone" dataKey="上证" stroke="#ef4444" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
+                      <Line type="monotone" dataKey="创业" stroke="#3b82f6" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
+                      <Line type="monotone" dataKey="科创" stroke="#a855f7" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
 
         {/* Archives */}
         <section className="mt-24 border-t border-white/5 pt-16 pb-32">
