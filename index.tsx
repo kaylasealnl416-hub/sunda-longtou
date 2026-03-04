@@ -173,6 +173,28 @@ const STOCK_TRADER_PERSONA = `你是一个名为『股市盘手』的顶级AI量
 - 语气：极度冷酷、数据驱动、一针见血、使用游资黑话（如：涨停溢价、高低切、退潮补跌、核按钮、主升浪、仓位管理）。
 - 禁忌：绝不说"取决于市场表现"、"投资需谨慎"等废话。你的分析必须是非黑即白的。`;
 
+// ===== 安全存储工具 =====
+const safeStorage = {
+  set: (key: string, value: unknown): boolean => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (error) {
+      console.error('[存储错误]', error);
+      return false;
+    }
+  },
+  get: (key: string, defaultValue?: unknown): unknown => {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : defaultValue;
+    } catch (error) {
+      console.error('[读取错误]', error);
+      return defaultValue;
+    }
+  }
+};
+
 // ===== 交易复盘中心组件 =====
 // ✅ 修复 BUG 1：接收 currentDate 属性，确保交易记录落在正确的复盘日期
 const TradeManager = ({
@@ -500,9 +522,9 @@ const App = () => {
     reader.onload = (event) => {
       try {
         const data = JSON.parse(event.target?.result as string);
-        if (data.history) { setHistory(data.history); localStorage.setItem(STORAGE_KEY, JSON.stringify(data.history)); }
-        if (data.trades) { setTrades(data.trades); localStorage.setItem(TRADE_STORAGE_KEY, JSON.stringify(data.trades)); }
-        if (data.positions) { setPositions(data.positions); localStorage.setItem(POSITION_STORAGE_KEY, JSON.stringify(data.positions)); }
+        if (data.history) { setHistory(data.history); safeStorage.set(STORAGE_KEY, data.history); }
+        if (data.trades) { setTrades(data.trades); safeStorage.set(TRADE_STORAGE_KEY, data.trades); }
+        if (data.positions) { setPositions(data.positions); safeStorage.set(POSITION_STORAGE_KEY, data.positions); }
         alert('✅ 数据恢复成功！');
       } catch (err) {
         alert('❌ 备份文件格式错误！');
@@ -520,7 +542,7 @@ const App = () => {
         reader.onload = (e) => {
           try {
             const data = e.target?.result;
-            const workbook = XLSX.read(data, { type: 'array', cellText: true });
+            const workbook = XLSX.read(data, { type: 'array' });
             const result: any = {};
             workbook.SheetNames.forEach(sheetName => {
               const sheet = workbook.Sheets[sheetName];
@@ -776,7 +798,7 @@ const App = () => {
     const updatedReview = { ...review, persistentSectors: persistent };
     const newHistory = [updatedReview, ...history.filter(h => h.date !== review.date)].sort((a,b) => b.date.localeCompare(a.date));
     setHistory(newHistory);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newHistory));
+    safeStorage.set(STORAGE_KEY, newHistory);
     alert("今日复盘已成功归档至信仰库。");
   };
 
@@ -800,23 +822,23 @@ const App = () => {
 
   const addTrade = (trade: Omit<TradeRecord, 'id'>) => {
     const newTrades = [{ ...trade, id: Date.now().toString() }, ...trades];
-    setTrades(newTrades); localStorage.setItem(TRADE_STORAGE_KEY, JSON.stringify(newTrades));
+    setTrades(newTrades); safeStorage.set(TRADE_STORAGE_KEY, newTrades);
     if (trade.action === 'sell') {
       setPositions(prev => {
         const np = prev.filter(p => p.stockCode !== trade.stockCode);
-        localStorage.setItem(POSITION_STORAGE_KEY, JSON.stringify(np)); return np;
+        safeStorage.set(POSITION_STORAGE_KEY, np); return np;
       });
     }
   };
 
   const addPosition = (pos: Omit<Position, 'id'>) => {
     const np = [...positions, { ...pos, id: Date.now().toString() }];
-    setPositions(np); localStorage.setItem(POSITION_STORAGE_KEY, JSON.stringify(np));
+    setPositions(np); safeStorage.set(POSITION_STORAGE_KEY, np);
   };
 
   const deleteTrade = (id: string) => {
     const newTrades = trades.filter(t => t.id !== id);
-    setTrades(newTrades); localStorage.setItem(TRADE_STORAGE_KEY, JSON.stringify(newTrades));
+    setTrades(newTrades); safeStorage.set(TRADE_STORAGE_KEY, newTrades);
   };
 
   const updatePositionPrice = (stockCode: string, currentPrice: number) => {
@@ -829,7 +851,7 @@ const App = () => {
         }
         return p;
       });
-      localStorage.setItem(POSITION_STORAGE_KEY, JSON.stringify(np));
+      safeStorage.set(POSITION_STORAGE_KEY, np);
       return np;
     });
   };
