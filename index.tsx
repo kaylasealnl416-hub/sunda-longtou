@@ -1169,6 +1169,11 @@ const App = () => {
                   </select>
                 </div>
 
+                <div className="bg-gradient-to-br from-blue-600/10 to-transparent border border-blue-500/20 p-5 rounded-3xl relative overflow-hidden group">
+                  <span className="text-[9px] font-black text-blue-500 uppercase flex items-center gap-2 mb-2"><Crosshair size={10}/> 容量中军</span>
+                  <input value={review.midArmy} onChange={e => setReview({...review, midArmy: e.target.value})} className="bg-transparent w-full text-xl font-black text-blue-500 outline-none" placeholder="容量中军..." />
+                </div>
+
                 <div className="bg-white/[0.02] border border-emerald-500/20 p-5 rounded-3xl">
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-[9px] font-black text-emerald-500 uppercase flex items-center gap-2"><Crosshair size={10}/> 今日实盘动作映射</span>
