@@ -1,0 +1,37 @@
+{
+  "date": "2026-03-07",
+  "timestamp": "2026-03-07 10:07:45",
+  "top5": [
+    {
+      "code": "SZ002261",
+      "name": "拓维信息",
+      "score": 84.7,
+      "reason": []
+    },
+    {
+      "code": "SH601868",
+      "name": "中国能建",
+      "score": 84.5,
+      "reason": []
+    },
+    {
+      "code": "SZ002506",
+      "name": "协鑫集成",
+      "score": 84.4,
+      "reason": []
+    },
+    {
+      "code": "SH600821",
+      "name": "金开新能",
+      "score": 84.3,
+      "reason": []
+    },
+    {
+      "code": "SZ001896",
+      "name": "豫能控股",
+      "score": 84.2,
+      "reason": []
+    }
+  ],
+  "warning": []
+}
