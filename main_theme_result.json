@@ -1,0 +1,129 @@
+{
+  "main_theme": "光伏设备",
+  "level": "部委级",
+  "score": 12,
+  "change_pct": 4.8,
+  "limit_up_count": 3,
+  "leader_stock": "协鑫集成",
+  "total_score": 30.6,
+  "related_sectors": [
+    "风电设备",
+    "储能",
+    "特高压"
+  ],
+  "keywords": [
+    "光伏"
+  ],
+  "all_sectors": [
+    {
+      "sector_name": "光伏设备",
+      "level": "部委级",
+      "theme_score": 12,
+      "change_pct": 4.8,
+      "limit_up_count": 3,
+      "leader_stock": "协鑫集成",
+      "total_score": 30.6,
+      "keywords": [
+        "光伏"
+      ]
+    },
+    {
+      "sector_name": "电力",
+      "level": "无明确题材",
+      "theme_score": 0,
+      "change_pct": 5.2,
+      "limit_up_count": 4,
+      "leader_stock": "中国能建",
+      "total_score": 22.4,
+      "keywords": []
+    },
+    {
+      "sector_name": "风电设备",
+      "level": "部委级",
+      "theme_score": 12,
+      "change_pct": 3.6,
+      "limit_up_count": 0,
+      "leader_stock": "金风科技",
+      "total_score": 19.2,
+      "keywords": [
+        "风电"
+      ]
+    },
+    {
+      "sector_name": "储能",
+      "level": "部委级",
+      "theme_score": 12,
+      "change_pct": 2.8,
+      "limit_up_count": 0,
+      "leader_stock": "阳光电源",
+      "total_score": 17.6,
+      "keywords": [
+        "储能"
+      ]
+    },
+    {
+      "sector_name": "特高压",
+      "level": "部委级",
+      "theme_score": 12,
+      "change_pct": 2.5,
+      "limit_up_count": 0,
+      "leader_stock": "特变电工",
+      "total_score": 17.0,
+      "keywords": [
+        "特高压"
+      ]
+    },
+    {
+      "sector_name": "电网设备",
+      "level": "无明确题材",
+      "theme_score": 0,
+      "change_pct": 4.2,
+      "limit_up_count": 1,
+      "leader_stock": "中国西电",
+      "total_score": 11.4,
+      "keywords": []
+    },
+    {
+      "sector_name": "石油开采",
+      "level": "无明确题材",
+      "theme_score": 0,
+      "change_pct": 4.5,
+      "limit_up_count": 0,
+      "leader_stock": "洲际油气",
+      "total_score": 9.0,
+      "keywords": []
+    },
+    {
+      "sector_name": "电池",
+      "level": "无明确题材",
+      "theme_score": 0,
+      "change_pct": 3.0,
+      "limit_up_count": 1,
+      "leader_stock": "宁德时代",
+      "total_score": 9.0,
+      "keywords": []
+    },
+    {
+      "sector_name": "煤炭开采",
+      "level": "无明确题材",
+      "theme_score": 0,
+      "change_pct": 3.9,
+      "limit_up_count": 0,
+      "leader_stock": "兖矿能源",
+      "total_score": 7.8,
+      "keywords": []
+    },
+    {
+      "sector_name": "天然气",
+      "level": "无明确题材",
+      "theme_score": 0,
+      "change_pct": 3.3,
+      "limit_up_count": 0,
+      "leader_stock": "新奥股份",
+      "total_score": 6.6,
+      "keywords": []
+    }
+  ],
+  "timestamp": "2026-03-11T23:39:14.021868",
+  "date": "2026-03-11"
+}
