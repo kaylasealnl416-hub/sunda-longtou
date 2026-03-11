@@ -1,368 +1,237 @@
-{
-  "date": "2026-03-11",
-  "timestamp": "2026-03-11T23:43:39.017091",
-  "market_emotion": {
-    "date": "20260311",
-    "timestamp": "2026-03-11T23:43:32.470297",
-    "limit_up_data": {
-      "total": 53,
-      "broken": 0,
-      "broken_rate": 0.0,
-      "ladder": {
-        "首板": 43,
-        "二连板": 8,
-        "三连板": 1,
-        "四连板+": 1
-      }
+[
+  {
+    "stock_code": "601868",
+    "stock_name": "中国能建",
+    "sector_name": "电力",
+    "date": "2026-03-11",
+    "timestamp": "2026-03-11T23:44:59.492098",
+    "total_score": 65.5,
+    "grade": "S",
+    "comment": "强势股，值得关注",
+    "emotion": {
+      "total": 19.5,
+      "emotion_score": 10,
+      "emotion_stage": "发酵期",
+      "volume_score": 9.5,
+      "volume_ratio": 0.94,
+      "volume_signal": "中性偏多"
     },
-    "volume_ratio": 0.99,
-    "market_style": {
-      "style": "均衡",
-      "score": -0.43
+    "capital": {
+      "total": 27,
+      "inflow_score": 15,
+      "net_inflow": 12701,
+      "big_order_score": 12,
+      "big_order_ratio": 0.44
     },
-    "emotion_cycle": {
-      "stage": "发酵期",
-      "confidence": 50,
+    "technical": {
+      "total": 13.0,
+      "board_score": 7,
+      "board_height": 2,
+      "seal_score": 6,
+      "open_times": 1,
+      "trend_score": 0.0,
+      "ma_count": 0
+    },
+    "theme": {
+      "total": 6,
+      "theme_score": 3,
+      "theme_level": "其他题材",
+      "sector_name": "电力",
+      "popularity_score": 3,
+      "popularity": "人气股"
+    },
+    "market_context": {
+      "emotion_stage": "发酵期",
       "position_advice": "60-80%",
-      "action": "主升浪持有",
-      "signals": [
-        "涨停板数量充足(53个)",
-        "炸板率极低(0.0%)",
-        "量比正常(0.99)",
-        "高连板出现(2个)"
-      ],
-      "color": "#f59e0b",
-      "raw_scores": {
-        "冰点期": 0,
-        "启动期": 20,
-        "发酵期": 50,
-        "高潮期": 30,
-        "退潮期": 0
-      }
+      "main_theme": "光伏设备"
     }
   },
-  "main_theme": {
-    "main_theme": "光伏设备",
-    "level": "部委级",
-    "score": 12,
-    "change_pct": 4.8,
-    "limit_up_count": 3,
-    "leader_stock": "协鑫集成",
-    "total_score": 30.6,
-    "related_sectors": [
-      "风电设备",
-      "储能",
-      "特高压"
-    ],
-    "keywords": [
-      "光伏"
-    ],
-    "all_sectors": [
-      {
-        "sector_name": "光伏设备",
-        "level": "部委级",
-        "theme_score": 12,
-        "change_pct": 4.8,
-        "limit_up_count": 3,
-        "leader_stock": "协鑫集成",
-        "total_score": 30.6,
-        "keywords": [
-          "光伏"
-        ]
-      },
-      {
-        "sector_name": "电力",
-        "level": "无明确题材",
-        "theme_score": 0,
-        "change_pct": 5.2,
-        "limit_up_count": 4,
-        "leader_stock": "中国能建",
-        "total_score": 22.4,
-        "keywords": []
-      },
-      {
-        "sector_name": "风电设备",
-        "level": "部委级",
-        "theme_score": 12,
-        "change_pct": 3.6,
-        "limit_up_count": 0,
-        "leader_stock": "金风科技",
-        "total_score": 19.2,
-        "keywords": [
-          "风电"
-        ]
-      },
-      {
-        "sector_name": "储能",
-        "level": "部委级",
-        "theme_score": 12,
-        "change_pct": 2.8,
-        "limit_up_count": 0,
-        "leader_stock": "阳光电源",
-        "total_score": 17.6,
-        "keywords": [
-          "储能"
-        ]
-      },
-      {
-        "sector_name": "特高压",
-        "level": "部委级",
-        "theme_score": 12,
-        "change_pct": 2.5,
-        "limit_up_count": 0,
-        "leader_stock": "特变电工",
-        "total_score": 17.0,
-        "keywords": [
-          "特高压"
-        ]
-      },
-      {
-        "sector_name": "电网设备",
-        "level": "无明确题材",
-        "theme_score": 0,
-        "change_pct": 4.2,
-        "limit_up_count": 1,
-        "leader_stock": "中国西电",
-        "total_score": 11.4,
-        "keywords": []
-      },
-      {
-        "sector_name": "石油开采",
-        "level": "无明确题材",
-        "theme_score": 0,
-        "change_pct": 4.5,
-        "limit_up_count": 0,
-        "leader_stock": "洲际油气",
-        "total_score": 9.0,
-        "keywords": []
-      },
-      {
-        "sector_name": "电池",
-        "level": "无明确题材",
-        "theme_score": 0,
-        "change_pct": 3.0,
-        "limit_up_count": 1,
-        "leader_stock": "宁德时代",
-        "total_score": 9.0,
-        "keywords": []
-      },
-      {
-        "sector_name": "煤炭开采",
-        "level": "无明确题材",
-        "theme_score": 0,
-        "change_pct": 3.9,
-        "limit_up_count": 0,
-        "leader_stock": "兖矿能源",
-        "total_score": 7.8,
-        "keywords": []
-      },
-      {
-        "sector_name": "天然气",
-        "level": "无明确题材",
-        "theme_score": 0,
-        "change_pct": 3.3,
-        "limit_up_count": 0,
-        "leader_stock": "新奥股份",
-        "total_score": 6.6,
-        "keywords": []
-      }
-    ]
-  },
-  "stocks": [
-    {
-      "stock_code": "601868",
-      "stock_name": "中国能建",
-      "total_score": 67.5,
-      "grade": "S",
-      "recommendation": "关注",
-      "emotion": {
-        "total": 21.5,
-        "emotion_cycle_score": 12,
-        "volume_score": 9.5,
-        "stage": "发酵期",
-        "volume_ratio": 0.94,
-        "volume_signal": "中性偏多"
-      },
-      "capital": {
-        "total": 20,
-        "net_inflow_score": 10,
-        "big_order_score": 10,
-        "net_inflow": 0,
-        "big_order_ratio": 0
-      },
-      "technical": {
-        "total": 15,
-        "board_height_score": 5,
-        "seal_quality_score": 5,
-        "trend_score": 5,
-        "board_height": 0,
-        "seal_times": 0,
-        "ma_count": 0
-      },
-      "theme": {
-        "total": 11.0,
-        "theme_score": 8.0,
-        "popularity_score": 3,
-        "main_theme": "光伏设备",
-        "theme_level": "部委级"
-      },
-      "timestamp": "2026-03-11T23:43:38.116379"
+  {
+    "stock_code": "002506",
+    "stock_name": "协鑫集成",
+    "sector_name": "光伏设备",
+    "date": "2026-03-11",
+    "timestamp": "2026-03-11T23:44:59.584709",
+    "total_score": 61.25,
+    "grade": "A",
+    "comment": "合格标的，可考虑",
+    "emotion": {
+      "total": 13.0,
+      "emotion_score": 10,
+      "emotion_stage": "发酵期",
+      "volume_score": 3.0,
+      "volume_ratio": 1.16,
+      "volume_signal": "中性"
     },
-    {
-      "stock_code": "000533",
-      "stock_name": "顺钠股份",
-      "total_score": 66.0,
-      "grade": "S",
-      "recommendation": "关注",
-      "emotion": {
-        "total": 20.0,
-        "emotion_cycle_score": 12,
-        "volume_score": 8.0,
-        "stage": "发酵期",
-        "volume_ratio": 3.1,
-        "volume_signal": "看多"
-      },
-      "capital": {
-        "total": 20,
-        "net_inflow_score": 10,
-        "big_order_score": 10,
-        "net_inflow": 0,
-        "big_order_ratio": 0
-      },
-      "technical": {
-        "total": 15,
-        "board_height_score": 5,
-        "seal_quality_score": 5,
-        "trend_score": 5,
-        "board_height": 0,
-        "seal_times": 0,
-        "ma_count": 0
-      },
-      "theme": {
-        "total": 11.0,
-        "theme_score": 8.0,
-        "popularity_score": 3,
-        "main_theme": "光伏设备",
-        "theme_level": "部委级"
-      },
-      "timestamp": "2026-03-11T23:43:38.681303"
+    "capital": {
+      "total": 30,
+      "inflow_score": 15,
+      "net_inflow": 26657,
+      "big_order_score": 15,
+      "big_order_ratio": 0.66
     },
-    {
-      "stock_code": "600821",
-      "stock_name": "金开新能",
-      "total_score": 66.0,
-      "grade": "S",
-      "recommendation": "关注",
-      "emotion": {
-        "total": 20.0,
-        "emotion_cycle_score": 12,
-        "volume_score": 8.0,
-        "stage": "发酵期",
-        "volume_ratio": 1.74,
-        "volume_signal": "看多"
-      },
-      "capital": {
-        "total": 20,
-        "net_inflow_score": 10,
-        "big_order_score": 10,
-        "net_inflow": 0,
-        "big_order_ratio": 0
-      },
-      "technical": {
-        "total": 15,
-        "board_height_score": 5,
-        "seal_quality_score": 5,
-        "trend_score": 5,
-        "board_height": 0,
-        "seal_times": 0,
-        "ma_count": 0
-      },
-      "theme": {
-        "total": 11.0,
-        "theme_score": 8.0,
-        "popularity_score": 3,
-        "main_theme": "光伏设备",
-        "theme_level": "部委级"
-      },
-      "timestamp": "2026-03-11T23:43:39.017019"
+    "technical": {
+      "total": 7.25,
+      "board_score": 0,
+      "board_height": 0,
+      "seal_score": 2,
+      "open_times": 3,
+      "trend_score": 5.25,
+      "ma_count": 3
     },
-    {
-      "stock_code": "002261",
-      "stock_name": "拓维信息",
-      "total_score": 61.0,
-      "grade": "A",
-      "recommendation": "观望",
-      "emotion": {
-        "total": 15.0,
-        "emotion_cycle_score": 12,
-        "volume_score": 3.0,
-        "stage": "发酵期",
-        "volume_ratio": 1.08,
-        "volume_signal": "中性"
-      },
-      "capital": {
-        "total": 20,
-        "net_inflow_score": 10,
-        "big_order_score": 10,
-        "net_inflow": 0,
-        "big_order_ratio": 0
-      },
-      "technical": {
-        "total": 15,
-        "board_height_score": 5,
-        "seal_quality_score": 5,
-        "trend_score": 5,
-        "board_height": 0,
-        "seal_times": 0,
-        "ma_count": 0
-      },
-      "theme": {
-        "total": 11.0,
-        "theme_score": 8.0,
-        "popularity_score": 3,
-        "main_theme": "光伏设备",
-        "theme_level": "部委级"
-      },
-      "timestamp": "2026-03-11T23:43:37.956440"
+    "theme": {
+      "total": 11,
+      "theme_score": 10,
+      "theme_level": "主线龙头",
+      "sector_name": "光伏设备",
+      "popularity_score": 1,
+      "popularity": "跟风"
     },
-    {
-      "stock_code": "002506",
-      "stock_name": "协鑫集成",
-      "total_score": 61.0,
-      "grade": "A",
-      "recommendation": "观望",
-      "emotion": {
-        "total": 15.0,
-        "emotion_cycle_score": 12,
-        "volume_score": 3.0,
-        "stage": "发酵期",
-        "volume_ratio": 1.16,
-        "volume_signal": "中性"
-      },
-      "capital": {
-        "total": 20,
-        "net_inflow_score": 10,
-        "big_order_score": 10,
-        "net_inflow": 0,
-        "big_order_ratio": 0
-      },
-      "technical": {
-        "total": 15,
-        "board_height_score": 5,
-        "seal_quality_score": 5,
-        "trend_score": 5,
-        "board_height": 0,
-        "seal_times": 0,
-        "ma_count": 0
-      },
-      "theme": {
-        "total": 11.0,
-        "theme_score": 8.0,
-        "popularity_score": 3,
-        "main_theme": "光伏设备",
-        "theme_level": "部委级"
-      },
-      "timestamp": "2026-03-11T23:43:38.352560"
+    "market_context": {
+      "emotion_stage": "发酵期",
+      "position_advice": "60-80%",
+      "main_theme": "光伏设备"
     }
-  ]
-}
+  },
+  {
+    "stock_code": "000533",
+    "stock_name": "顺钠股份",
+    "sector_name": "物流",
+    "date": "2026-03-11",
+    "timestamp": "2026-03-11T23:44:59.734450",
+    "total_score": 55.25,
+    "grade": "A",
+    "comment": "合格标的，可考虑",
+    "emotion": {
+      "total": 18.0,
+      "emotion_score": 10,
+      "emotion_stage": "发酵期",
+      "volume_score": 8.0,
+      "volume_ratio": 3.1,
+      "volume_signal": "看多"
+    },
+    "capital": {
+      "total": 24,
+      "inflow_score": 12,
+      "net_inflow": 6894,
+      "big_order_score": 12,
+      "big_order_ratio": 0.46
+    },
+    "technical": {
+      "total": 7.25,
+      "board_score": 0,
+      "board_height": 0,
+      "seal_score": 2,
+      "open_times": 3,
+      "trend_score": 5.25,
+      "ma_count": 3
+    },
+    "theme": {
+      "total": 6,
+      "theme_score": 3,
+      "theme_level": "其他题材",
+      "sector_name": "物流",
+      "popularity_score": 3,
+      "popularity": "人气股"
+    },
+    "market_context": {
+      "emotion_stage": "发酵期",
+      "position_advice": "60-80%",
+      "main_theme": "光伏设备"
+    }
+  },
+  {
+    "stock_code": "600821",
+    "stock_name": "金开新能",
+    "sector_name": "电力",
+    "date": "2026-03-11",
+    "timestamp": "2026-03-11T23:44:59.883300",
+    "total_score": 53.25,
+    "grade": "B",
+    "comment": "一般标的，观望",
+    "emotion": {
+      "total": 18.0,
+      "emotion_score": 10,
+      "emotion_stage": "发酵期",
+      "volume_score": 8.0,
+      "volume_ratio": 1.74,
+      "volume_signal": "看多"
+    },
+    "capital": {
+      "total": 24,
+      "inflow_score": 9,
+      "net_inflow": 3534,
+      "big_order_score": 15,
+      "big_order_ratio": 0.67
+    },
+    "technical": {
+      "total": 7.25,
+      "board_score": 0,
+      "board_height": 0,
+      "seal_score": 2,
+      "open_times": 3,
+      "trend_score": 5.25,
+      "ma_count": 3
+    },
+    "theme": {
+      "total": 4,
+      "theme_score": 3,
+      "theme_level": "其他题材",
+      "sector_name": "电力",
+      "popularity_score": 1,
+      "popularity": "跟风"
+    },
+    "market_context": {
+      "emotion_stage": "发酵期",
+      "position_advice": "60-80%",
+      "main_theme": "光伏设备"
+    }
+  },
+  {
+    "stock_code": "002261",
+    "stock_name": "拓维信息",
+    "sector_name": "软件服务",
+    "date": "2026-03-11",
+    "timestamp": "2026-03-11T23:44:59.420201",
+    "total_score": 52.0,
+    "grade": "B",
+    "comment": "一般标的，观望",
+    "emotion": {
+      "total": 13.0,
+      "emotion_score": 10,
+      "emotion_stage": "发酵期",
+      "volume_score": 3.0,
+      "volume_ratio": 1.08,
+      "volume_signal": "中性"
+    },
+    "capital": {
+      "total": 27,
+      "inflow_score": 15,
+      "net_inflow": 39104,
+      "big_order_score": 12,
+      "big_order_ratio": 0.51
+    },
+    "technical": {
+      "total": 8.0,
+      "board_score": 0,
+      "board_height": 0,
+      "seal_score": 8,
+      "open_times": 0,
+      "trend_score": 0.0,
+      "ma_count": 0
+    },
+    "theme": {
+      "total": 4,
+      "theme_score": 3,
+      "theme_level": "其他题材",
+      "sector_name": "软件服务",
+      "popularity_score": 1,
+      "popularity": "跟风"
+    },
+    "market_context": {
+      "emotion_stage": "发酵期",
+      "position_advice": "60-80%",
+      "main_theme": "光伏设备"
+    }
+  }
+]
