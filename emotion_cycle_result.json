@@ -1,0 +1,40 @@
+{
+  "date": "20260311",
+  "timestamp": "2026-03-11T23:25:25.672202",
+  "limit_up_data": {
+    "total": 53,
+    "broken": 0,
+    "broken_rate": 0.0,
+    "ladder": {
+      "首板": 43,
+      "二连板": 8,
+      "三连板": 1,
+      "四连板+": 1
+    }
+  },
+  "volume_ratio": 0.99,
+  "market_style": {
+    "style": "均衡",
+    "score": -0.43
+  },
+  "emotion_cycle": {
+    "stage": "发酵期",
+    "confidence": 50,
+    "position_advice": "60-80%",
+    "action": "主升浪持有",
+    "signals": [
+      "涨停板数量充足(53个)",
+      "炸板率极低(0.0%)",
+      "量比正常(0.99)",
+      "高连板出现(2个)"
+    ],
+    "color": "#f59e0b",
+    "raw_scores": {
+      "冰点期": 0,
+      "启动期": 20,
+      "发酵期": 50,
+      "高潮期": 30,
+      "退潮期": 0
+    }
+  }
+}

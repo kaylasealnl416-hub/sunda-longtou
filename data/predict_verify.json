@@ -1,0 +1,92 @@
+[
+  {
+    "name": "顺钠股份",
+    "boards": 5,
+    "score": 200,
+    "next_limit": true
+  },
+  {
+    "name": "汉缆股份",
+    "boards": 5,
+    "score": 195,
+    "next_limit": true
+  },
+  {
+    "name": "洲际油气",
+    "boards": 4,
+    "score": 158,
+    "next_limit": true
+  },
+  {
+    "name": "泰嘉股份",
+    "boards": 4,
+    "score": 153,
+    "next_limit": true
+  },
+  {
+    "name": "金正大",
+    "boards": 4,
+    "score": 178,
+    "next_limit": true
+  },
+  {
+    "name": "亚盛集团",
+    "boards": 3,
+    "score": 116,
+    "next_limit": true
+  },
+  {
+    "name": "准油股份",
+    "boards": 3,
+    "score": 141,
+    "next_limit": true
+  },
+  {
+    "name": "通源石油",
+    "boards": 3,
+    "score": 141,
+    "next_limit": true
+  },
+  {
+    "name": "协鑫能科",
+    "boards": 2,
+    "score": 139,
+    "next_limit": true
+  },
+  {
+    "name": "三安光电",
+    "boards": 1,
+    "score": 137,
+    "next_limit": true
+  },
+  {
+    "name": "兆驰股份",
+    "boards": 1,
+    "score": 117,
+    "next_limit": true
+  },
+  {
+    "name": "华工科技",
+    "boards": 2,
+    "score": 129,
+    "next_limit": false
+  },
+  {
+    "name": "新易盛",
+    "boards": 1,
+    "score": 97,
+    "next_limit": false
+  },
+  {
+    "name": "某冷门股",
+    "boards": 1,
+    "score": 87,
+    "next_limit": false
+  },
+  {
+    "name": "某垃圾股",
+    "boards": 1,
+    "score": 82,
+    "next_limit": false
+  }
+]

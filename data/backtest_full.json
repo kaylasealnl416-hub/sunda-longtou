@@ -1,0 +1,114 @@
+[
+  {
+    "name": "顺钠股份",
+    "sector": "电力",
+    "max_boards": 5,
+    "max_score": 157,
+    "days": 4,
+    "avg_change": 7.5
+  },
+  {
+    "name": "汉缆股份",
+    "sector": "电力",
+    "max_boards": 5,
+    "max_score": 157,
+    "days": 4,
+    "avg_change": 7.5
+  },
+  {
+    "name": "洲际油气",
+    "sector": "油气",
+    "max_boards": 3,
+    "max_score": 147,
+    "days": 2,
+    "avg_change": 10.0
+  },
+  {
+    "name": "准油股份",
+    "sector": "油气",
+    "max_boards": 3,
+    "max_score": 147,
+    "days": 2,
+    "avg_change": 9.75
+  },
+  {
+    "name": "通源石油",
+    "sector": "油气",
+    "max_boards": 2,
+    "max_score": 139,
+    "days": 1,
+    "avg_change": 10.0
+  },
+  {
+    "name": "泰嘉股份",
+    "sector": "有色",
+    "max_boards": 3,
+    "max_score": 137,
+    "days": 2,
+    "avg_change": 10.0
+  },
+  {
+    "name": "山东墨龙",
+    "sector": "油气",
+    "max_boards": 3,
+    "max_score": 137,
+    "days": 2,
+    "avg_change": 10.0
+  },
+  {
+    "name": "协鑫能科",
+    "sector": "光伏",
+    "max_boards": 3,
+    "max_score": 132,
+    "days": 2,
+    "avg_change": 5.0
+  },
+  {
+    "name": "水发燃气",
+    "sector": "油气",
+    "max_boards": 2,
+    "max_score": 129,
+    "days": 1,
+    "avg_change": 9.2
+  },
+  {
+    "name": "金正大",
+    "sector": "化工",
+    "max_boards": 2,
+    "max_score": 126,
+    "days": 1,
+    "avg_change": 10.0
+  },
+  {
+    "name": "豫能控股",
+    "sector": "电力",
+    "max_boards": 2,
+    "max_score": 126,
+    "days": 1,
+    "avg_change": 10.0
+  },
+  {
+    "name": "泰豪科技",
+    "sector": "电力",
+    "max_boards": 2,
+    "max_score": 126,
+    "days": 1,
+    "avg_change": 10.0
+  },
+  {
+    "name": "亚盛集团",
+    "sector": "农业",
+    "max_boards": 2,
+    "max_score": 116,
+    "days": 1,
+    "avg_change": 8.5
+  },
+  {
+    "name": "卓郎智能",
+    "sector": "机械",
+    "max_boards": 2,
+    "max_score": 114,
+    "days": 1,
+    "avg_change": 10.0
+  }
+]

@@ -1,0 +1,220 @@
+[
+  {
+    "name": "拓维信息",
+    "code": "SZ002261",
+    "sector": "AI算力",
+    "track": [
+      {
+        "day": 1,
+        "price": 35.0,
+        "change": 10.0,
+        "limit_up": true,
+        "score": 173.2,
+        "market": "主升"
+      },
+      {
+        "day": 2,
+        "price": 38.5,
+        "change": 10.0,
+        "limit_up": true,
+        "score": 175.0,
+        "market": "主升"
+      },
+      {
+        "day": 3,
+        "price": 42.35,
+        "change": 10.0,
+        "limit_up": true,
+        "score": 119.7,
+        "market": "高潮"
+      },
+      {
+        "day": 4,
+        "price": 46.59,
+        "change": 10.0,
+        "limit_up": true,
+        "score": 95.1,
+        "market": "退潮"
+      }
+    ]
+  },
+  {
+    "name": "中国能建",
+    "code": "SH601868",
+    "sector": "基建",
+    "track": [
+      {
+        "day": 1,
+        "price": 2.65,
+        "change": 10.0,
+        "limit_up": true,
+        "score": 138.0,
+        "market": "主升"
+      },
+      {
+        "day": 2,
+        "price": 2.92,
+        "change": 10.0,
+        "limit_up": true,
+        "score": 136.6,
+        "market": "主升"
+      },
+      {
+        "day": 3,
+        "price": 3.21,
+        "change": 10.0,
+        "limit_up": true,
+        "score": 108.7,
+        "market": "高潮"
+      },
+      {
+        "day": 4,
+        "price": 3.53,
+        "change": 10.0,
+        "limit_up": true,
+        "score": 78.9,
+        "market": "退潮"
+      }
+    ]
+  },
+  {
+    "name": "协鑫集成",
+    "code": "SZ002506",
+    "sector": "光伏",
+    "track": [
+      {
+        "day": 1,
+        "price": 5.1,
+        "change": 10.0,
+        "limit_up": true,
+        "score": 175.5,
+        "market": "主升"
+      },
+      {
+        "day": 2,
+        "price": 5.61,
+        "change": 10.0,
+        "limit_up": true,
+        "score": 167.1,
+        "market": "主升"
+      },
+      {
+        "day": 3,
+        "price": 6.17,
+        "change": 10.0,
+        "limit_up": true,
+        "score": 121.5,
+        "market": "高潮"
+      },
+      {
+        "day": 4,
+        "price": 6.79,
+        "change": 10.0,
+        "limit_up": true,
+        "score": 89.8,
+        "market": "退潮"
+      }
+    ]
+  },
+  {
+    "name": "洲际油气",
+    "code": "SH600759",
+    "sector": "油气",
+    "track": [
+      {
+        "day": 1,
+        "price": 7.5,
+        "change": 10.0,
+        "limit_up": true,
+        "score": 138.9,
+        "market": "主升"
+      },
+      {
+        "day": 2,
+        "price": 7.2,
+        "change": -4.0,
+        "limit_up": false,
+        "score": 66.0,
+        "market": "主升"
+      },
+      {
+        "day": 3,
+        "price": 6.84,
+        "change": -5.0,
+        "limit_up": false,
+        "score": 47.5,
+        "market": "高潮"
+      }
+    ]
+  },
+  {
+    "name": "金牛化工",
+    "code": "SH600722",
+    "sector": "化工",
+    "track": [
+      {
+        "day": 1,
+        "price": 5.2,
+        "change": 10.0,
+        "limit_up": true,
+        "score": 153.0,
+        "market": "主升"
+      },
+      {
+        "day": 2,
+        "price": 5.72,
+        "change": 10.0,
+        "limit_up": true,
+        "score": 144.0,
+        "market": "主升"
+      },
+      {
+        "day": 3,
+        "price": 6.29,
+        "change": 10.0,
+        "limit_up": true,
+        "score": 105.8,
+        "market": "高潮"
+      },
+      {
+        "day": 4,
+        "price": 6.92,
+        "change": 10.0,
+        "limit_up": true,
+        "score": 83.2,
+        "market": "退潮"
+      }
+    ]
+  },
+  {
+    "name": "三安光电",
+    "code": "SH600703",
+    "sector": "LED",
+    "track": [
+      {
+        "day": 1,
+        "price": 18.5,
+        "change": 8.0,
+        "limit_up": false,
+        "score": 86.7,
+        "market": "主升"
+      },
+      {
+        "day": 2,
+        "price": 19.0,
+        "change": 2.7,
+        "limit_up": false,
+        "score": 72.9,
+        "market": "主升"
+      },
+      {
+        "day": 3,
+        "price": 18.2,
+        "change": -4.2,
+        "limit_up": false,
+        "score": 43.3,
+        "market": "高潮"
+      }
+    ]
+  }
+]

@@ -1,0 +1,926 @@
+[
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "中源协和",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "同力天启",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "禾望电气",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "联域股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "华是科技",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "红 宝 丽",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "奥士康",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "新华传媒",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "江苏华辰",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "联特科技",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "六国化工",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "海鸥股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "威领股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "卫星化学",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "南卫股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "泰嘉股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "汉缆股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "江顺科技",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "顺钠股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "宁波建工",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "金开新能",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "三星医疗",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "航锦科技",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "交运股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "南网数字",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "红墙股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "王力安防",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "韶能股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "彩虹集团",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "协鑫能科",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "国际医学",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "泰豪科技",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "美利云",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "宗申动力",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "亚盛集团",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "赤天化",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "新能泰山",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "拓维信息",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "国晟科技",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "晨光新材",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "协鑫集成",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "粤桂股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "奥 特 迅",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "卓郎智能",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "华电辽能",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "华瓷股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "威星智能",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "诚邦股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "华塑控股",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "豫能控股",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "赞宇科技",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "江钨装备",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "安徽合力",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "新疆天业",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "广电电气",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "常宝股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "万泽股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "远光软件",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "亚虹医药-U",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "键邦股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "新柴股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "亚星化学",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "中原内配",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "华新环保",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "塞力医疗",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "腾龙股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "中国动力",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "恒天海龙",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "敦煌种业",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "中国能建",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "金正大",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "金浦钛业",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "金牛化工",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260306",
+    "verify_day": "20260307",
+    "stock": "瑞达期货",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260305",
+    "verify_day": "20260306",
+    "stock": "卓郎智能",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260305",
+    "verify_day": "20260306",
+    "stock": "王力安防",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260305",
+    "verify_day": "20260306",
+    "stock": "奥士康",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260305",
+    "verify_day": "20260306",
+    "stock": "泰豪科技",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260305",
+    "verify_day": "20260306",
+    "stock": "美利云",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260305",
+    "verify_day": "20260306",
+    "stock": "华塑控股",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260305",
+    "verify_day": "20260306",
+    "stock": "汉缆股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260305",
+    "verify_day": "20260306",
+    "stock": "顺钠股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260304",
+    "verify_day": "20260305",
+    "stock": "卓郎智能",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260304",
+    "verify_day": "20260305",
+    "stock": "通光线缆",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260304",
+    "verify_day": "20260305",
+    "stock": "王力安防",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260304",
+    "verify_day": "20260305",
+    "stock": "积成电子",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260304",
+    "verify_day": "20260305",
+    "stock": "智能自控",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260304",
+    "verify_day": "20260305",
+    "stock": "汉缆股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260304",
+    "verify_day": "20260305",
+    "stock": "顺钠股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260303",
+    "verify_day": "20260304",
+    "stock": "石化油服",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260303",
+    "verify_day": "20260304",
+    "stock": "山东墨龙",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260303",
+    "verify_day": "20260304",
+    "stock": "洲际油气",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260303",
+    "verify_day": "20260304",
+    "stock": "准油股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260303",
+    "verify_day": "20260304",
+    "stock": "亚盛集团",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260303",
+    "verify_day": "20260304",
+    "stock": "水发燃气",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "中曼石油",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "惠博普",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "潜能恒信",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "中油工程",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "德石股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "仁智股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "洲际油气",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "和顺石油",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "中国海油",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "通源石油",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "华盛昌",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "红星发展",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "金瑞矿业",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "招商南油",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "贝肯能源",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "中国石油",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "亚盛集团",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "招商轮船",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "海油工程",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "石化油服",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "海油发展",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "华如科技",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "南 京 港",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "蓝焰控股",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "广聚能源",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "广汇能源",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "准油股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "博迈科",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "水发燃气",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "中海油服",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "山东墨龙",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "科力股份",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "新锦动力",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "上海石化",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "泰山石油",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "中远海能",
+    "score": 115.0,
+    "continue_limit": true
+  },
+  {
+    "score_day": "20260302",
+    "verify_day": "20260303",
+    "stock": "金牛化工",
+    "score": 115.0,
+    "continue_limit": true
+  }
+]

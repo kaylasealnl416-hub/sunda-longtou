@@ -1,0 +1,43 @@
+{
+  "顺钠股份": {
+    "code": "000533",
+    "first_board_date": "2026-03-05",
+    "first_board_score": 85.0,
+    "boards": [
+      {
+        "date": "2026-03-05",
+        "score": 85.0,
+        "type": "首板"
+      },
+      {
+        "date": "2026-03-06",
+        "score": 88.0,
+        "type": "二次首板",
+        "change": 3.0
+      },
+      {
+        "date": "2026-03-07",
+        "score": 90.0,
+        "type": "连板"
+      }
+    ],
+    "status": "追踪中",
+    "track_days": 0,
+    "total_change": 3.0
+  },
+  "汉缆股份": {
+    "code": "002498",
+    "first_board_date": "2026-03-05",
+    "first_board_score": 80.0,
+    "boards": [
+      {
+        "date": "2026-03-05",
+        "score": 80.0,
+        "type": "首板"
+      }
+    ],
+    "status": "追踪中",
+    "track_days": 0,
+    "total_change": 0
+  }
+}
