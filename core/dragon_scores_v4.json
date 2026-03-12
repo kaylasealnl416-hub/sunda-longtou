@@ -1,0 +1,40 @@
+{
+  "stock_code": "600905",
+  "stock_name": "三峡能源",
+  "total_score": 95.5,
+  "rating": "SSS",
+  "level": "市场总龙头",
+  "emotion_cycle": "启动期",
+  "strategy": "启动期",
+  "scores": {
+    "emotion": {
+      "total": 27,
+      "emotion_score": 12,
+      "emotion_stage": "启动期",
+      "volume_score": 15,
+      "volume_ratio": 1.8
+    },
+    "technical": {
+      "total": 30,
+      "board_score": 12,
+      "seal_score": 10,
+      "trend_score": 8,
+      "boards": 3
+    },
+    "capital": {
+      "total": 25,
+      "inflow_score": 15,
+      "big_order_score": 10
+    },
+    "theme": {
+      "total": 9,
+      "theme_score": 6,
+      "popularity_score": 3
+    },
+    "fundamental": {
+      "total": 4.5,
+      "continuity_score": 3,
+      "growth_score": 1.5
+    }
+  }
+}

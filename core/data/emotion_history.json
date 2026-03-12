@@ -1,0 +1,28 @@
+{
+  "records": [
+    {
+      "date": "20260312",
+      "stage": "启动期",
+      "total": 22,
+      "broken_rate": 0.0
+    },
+    {
+      "date": "20260312",
+      "stage": "启动期",
+      "total": 22,
+      "broken_rate": 0.0
+    },
+    {
+      "date": "20260312",
+      "stage": "发酵期",
+      "total": 47,
+      "broken_rate": 0.0
+    },
+    {
+      "date": "20260312",
+      "stage": "发酵期",
+      "total": 49,
+      "broken_rate": 0.0
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "date": "20260312",
+  "timestamp": "2026-03-12T09:45:33.601999",
+  "limit_up_data": {
+    "total": 22,
+    "broken": 0,
+    "broken_rate": 0.0,
+    "ladder": {
+      "首板": 16,
+      "二连板": 3,
+      "三连板": 2,
+      "四连板": 1,
+      "五连板+": 0
+    },
+    "max_boards": 4,
+    "total_amount": 146.1
+  },
+  "volume_ratio": 0.99,
+  "turnover": 9500.0,
+  "trend_data": {
+    "trend": "平稳",
+    "total_change": -31,
+    "broken_rate_change": 0.0
+  },
+  "emotion_cycle": {
+    "stage": "启动期",
+    "confidence": 80,
+    "position_advice": "40-60%",
+    "action": "追启动初期",
+    "risk_level": "低",
+    "description": "市场开始回暖，确定性最高",
+    "signals": [
+      "涨停板回升(22个) → 启动信号",
+      "炸板率极低(0.0%) → 高潮信号",
+      "连板高度中等(4板) → 启动/发酵信号",
+      "量比正常(0.99) → 启动信号"
+    ],
+    "color": "#10b981",
+    "raw_scores": {
+      "冰点期": 0,
+      "启动期": 55,
+      "发酵期": 10,
+      "高潮期": 35,
+      "退潮期": 0
+    },
+    "trend": "平稳"
+  }
+}
