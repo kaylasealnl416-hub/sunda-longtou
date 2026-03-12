@@ -10,7 +10,8 @@ Daily Auto Scoring Script
 4. 获取人气榜单
 5. 更新历史跟踪
 6. 计算赚钱效应
-7. 发送报告到飞书
+7. 更新实时监控列表 ⭐
+8. 发送报告到飞书
 """
 
 import sys
@@ -290,8 +291,40 @@ except Exception as e:
 
 print()
 
-# ==================== 7. 发送到飞书 ====================
-print("7️⃣ 发送报告到飞书...")
+# ==================== 7. 更新实时监控列表 ====================
+print("7️⃣ 更新实时监控列表...")
+try:
+    from realtime_monitor import RealtimeMonitor
+    
+    # 获取TOP 8股票（从scores列表）
+    top8_stocks = scores[:8]
+    
+    # 初始化监控系统
+    monitor = RealtimeMonitor()
+    
+    # 清空旧的监控列表（可选）
+    # monitor.clear_watchlist()
+    
+    # 添加TOP 8到监控列表
+    added_count = 0
+    for stock in top8_stocks:
+        try:
+            monitor.add_to_watchlist(stock['code'], stock['name'])
+            added_count += 1
+        except Exception as e:
+            print(f"  ⚠️  添加失败 {stock['name']}: {e}")
+    
+    print(f"✅ 已添加 {added_count} 只股票到监控列表")
+    
+except ImportError:
+    print("⚠️  实时监控模块未安装，跳过")
+except Exception as e:
+    print(f"⚠️  监控列表更新失败: {e}")
+
+print()
+
+# ==================== 8. 发送到飞书 ====================
+print("8️⃣ 发送报告到飞书...")
 try:
     import requests
     
