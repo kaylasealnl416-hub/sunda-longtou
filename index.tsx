@@ -146,7 +146,7 @@ const INITIAL_REVIEW: MarketReview = {
     '1': { count: 0, stock: '', concept: '', promoRate: 0 },
   },
   dragon: '', dragonStatus: 'accelerate', midArmy: '',
-  watchlist: Array(6).fill({ name: '', concept: '', plan: '' }),
+  watchlist: Array.from({ length: 6 }, () => ({ name: '', concept: '', plan: '' })),
   score: 50, stage: '待研判', aiAnalysis: '',
   customKeywords: '',
 };
@@ -437,6 +437,14 @@ const App = () => {
 
   const [trades, setTrades] = useState<TradeRecord[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
+  const [isDirty, setIsDirty] = useState(false);
+  const [toasts, setToasts] = useState<{ id: string; msg: string; type: 'ok' | 'err' | 'info' }[]>([]);
+
+  const showToast = (msg: string, type: 'ok' | 'err' | 'info' = 'info') => {
+    const id = Date.now().toString();
+    setToasts(prev => [...prev, { id, msg, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
+  };
 
   useEffect(() => {
     const savedTrades = localStorage.getItem(TRADE_STORAGE_KEY);
@@ -525,9 +533,9 @@ const App = () => {
         if (data.history) { setHistory(data.history); safeStorage.set(STORAGE_KEY, data.history); }
         if (data.trades) { setTrades(data.trades); safeStorage.set(TRADE_STORAGE_KEY, data.trades); }
         if (data.positions) { setPositions(data.positions); safeStorage.set(POSITION_STORAGE_KEY, data.positions); }
-        alert('✅ 数据恢复成功！');
+        showToast('数据恢复成功', 'ok');
       } catch (err) {
-        alert('❌ 备份文件格式错误！');
+        showToast('备份文件格式错误', 'err');
       }
     };
     reader.readAsText(file);
@@ -732,7 +740,7 @@ const App = () => {
         ladder[key] = { count: sorted.length, stock: sorted[0]?.name || '', concept: '', promoRate: 0 };
       });
 
-      result.brokenRate = result.limitUpTotal ? ((brokenCount / (result.limitUpTotal + brokenCount)) * 100).toFixed(1) : '0';
+      result.brokenRate = result.limitUpTotal ? parseFloat(((brokenCount / (result.limitUpTotal + brokenCount)) * 100).toFixed(1)) : 0;
       result.ladder = ladder;
     }
 
@@ -773,7 +781,7 @@ const App = () => {
         try {
           const excelData = await parseExcelFile(file);
           newFiles.push({ name: file.name, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', data: JSON.stringify(excelData), isExcel: true });
-        } catch (error) { alert(`解析 ${file.name} 失败: ${error}`); }
+        } catch (error) { showToast(`解析 ${file.name} 失败`, 'err'); }
       } else {
         const reader = new FileReader();
         const base64Promise = new Promise<string>((resolve) => {
@@ -799,7 +807,8 @@ const App = () => {
     const newHistory = [updatedReview, ...history.filter(h => h.date !== review.date)].sort((a,b) => b.date.localeCompare(a.date));
     setHistory(newHistory);
     safeStorage.set(STORAGE_KEY, newHistory);
-    alert("今日复盘已成功归档至信仰库。");
+    setIsDirty(false);
+    showToast('今日复盘已归档至信仰库', 'ok');
   };
 
   const handleSnapshot = async () => {
@@ -817,7 +826,7 @@ const App = () => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a'); link.href = url; link.download = `龙头信仰_${review.date}.png`; link.click();
       URL.revokeObjectURL(url);
-    } catch (error) { alert("网页快照生成失败，请重试"); } finally { setIsLoading(false); }
+    } catch (error) { showToast('网页快照生成失败，请重试', 'err'); } finally { setIsLoading(false); }
   };
 
   const addTrade = (trade: Omit<TradeRecord, 'id'>) => {
@@ -825,8 +834,12 @@ const App = () => {
     setTrades(newTrades); safeStorage.set(TRADE_STORAGE_KEY, newTrades);
     if (trade.action === 'sell') {
       setPositions(prev => {
-        const np = prev.filter(p => p.stockCode !== trade.stockCode);
-        safeStorage.set(POSITION_STORAGE_KEY, np); return np;
+        // FIFO：仅移除最早的一条匹配持仓，支持同标的多次买入
+        const idx = prev.findIndex(p => p.stockCode === trade.stockCode);
+        if (idx === -1) return prev;
+        const np = [...prev.slice(0, idx), ...prev.slice(idx + 1)];
+        safeStorage.set(POSITION_STORAGE_KEY, np);
+        return np;
       });
     }
   };
@@ -907,7 +920,7 @@ const App = () => {
             else if (file.name.includes('Ａ股') || file.name.includes('A股') || file.name.includes('两融')) { allExcelData['全部Ａ股'] = parsedData; matched = true; }
             else if (file.name.includes('沪深京') || file.name.includes('大盘') || file.name.includes('指数')) { allExcelData['沪深京主要指数'] = parsedData; matched = true; }
             if (!matched && Object.keys(parsedData).length > 0) allExcelData['全部Ａ股'] = parsedData;
-          } catch (e) { }
+          } catch (e) { console.error('[Excel文件解析错误]', (e as Error).message); }
         }
         if (Object.keys(allExcelData).length > 0) {
           const extractedData = extractMarketData(allExcelData, history);
@@ -916,7 +929,7 @@ const App = () => {
           setReview(prev => ({ ...prev, ...extractedData, dragon: dragonStock || prev.dragon, midArmy: extractedData.midArmy || prev.midArmy, aiAnalysis: `✅ Excel数据解析完成！\n- 涨停数: ${extractedData.limitUpTotal}家\n- 跌停数: ${extractedData.limitDownTotal}家\n- 上涨家数: ${extractedData.upDownCount?.up || 0}家\n- 下跌家数: ${extractedData.upDownCount?.down || 0}家\n- 炸板率: ${extractedData.brokenRate}%\n\n请手动补充或确认梯队核心，随后启动盘手研判。` }));
           setShowFileManager(false); setIsLoading(false); return;
         }
-      } catch (e) { }
+      } catch (e) { setStatusMsg(`Excel数据提取失败: ${(e as Error).message}`); }
     }
 
     setStatusMsg("正在通过AI解构原始信源数据...");
@@ -926,7 +939,7 @@ const App = () => {
       const data = JSON.parse(responseText || "{}");
       setReview(prev => ({ ...prev, ...data, aiAnalysis: "信源同步完成。建议立即进行周期定性分析。" }));
       setShowFileManager(false);
-    } catch (e) { alert("自动填充失败"); } finally { setIsLoading(false); }
+    } catch (e) { showToast('自动填充失败，请检查文件格式', 'err'); } finally { setIsLoading(false); }
   };
 
   // ✅ 核心业务引擎：量化情绪周期分析
@@ -989,7 +1002,7 @@ const App = () => {
 
       setReview(prev => ({ ...prev, stage, aiAnalysis: res }));
     } catch (e) {
-      alert("研判推演异常: " + (e as Error).message);
+      showToast('研判推演异常: ' + (e as Error).message, 'err');
     } finally {
       setIsLoading(false);
     }
@@ -1013,7 +1026,7 @@ const App = () => {
           <div className="flex items-center gap-6">
           <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-xl border border-white/10">
             <Calendar size={12} className="text-gray-500" />
-            <input type="date" value={review.date} onChange={e => setReview({...review, date: e.target.value})} className="bg-transparent border-none text-[11px] font-black outline-none text-gray-300" />
+            <input type="date" value={review.date} onChange={e => { setReview({...review, date: e.target.value}); setIsDirty(true); }} className="bg-transparent border-none text-[11px] font-black outline-none text-gray-300" />
           </div>
           <div className="flex gap-2">
             <button onClick={() => setShowFileManager(true)} className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[11px] font-black flex items-center gap-2 transition-all">
@@ -1065,7 +1078,7 @@ const App = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-red-500/5 border border-red-500/10 p-5 rounded-2xl flex flex-col">
                   <span className="text-[10px] font-black text-red-500/60 uppercase mb-1">今日涨停</span>
-                  <input type="number" value={review.limitUpTotal} onChange={e => setReview({...review, limitUpTotal: +e.target.value})} className="bg-transparent text-3xl font-black text-red-500 outline-none w-full" />
+                  <input type="number" value={review.limitUpTotal} onChange={e => { setReview({...review, limitUpTotal: +e.target.value}); setIsDirty(true); }} className="bg-transparent text-3xl font-black text-red-500 outline-none w-full" />
                 </div>
                 <div className="bg-green-500/5 border border-green-500/10 p-5 rounded-2xl flex flex-col">
                   <span className="text-[10px] font-black text-green-500/60 uppercase mb-1">今日跌停</span>
@@ -1185,7 +1198,7 @@ const App = () => {
 
                 <div className="bg-gradient-to-br from-red-600/10 to-transparent border border-red-500/20 p-5 rounded-3xl relative overflow-hidden group">
                   <span className="text-[9px] font-black text-red-500 uppercase flex items-center gap-2 mb-2"><Trophy size={10}/> 情绪总龙头</span>
-                  <input value={review.dragon} onChange={e => setReview({...review, dragon: e.target.value})} className="bg-transparent w-full text-2xl font-black text-red-500 outline-none mb-3 relative z-10" placeholder="寻龙中..." />
+                  <input value={review.dragon} onChange={e => { setReview({...review, dragon: e.target.value}); setIsDirty(true); }} className="bg-transparent w-full text-2xl font-black text-red-500 outline-none mb-3 relative z-10" placeholder="寻龙中..." />
                   <select value={review.dragonStatus} onChange={e => setReview({...review, dragonStatus: e.target.value as any})} className="bg-black/40 text-[10px] font-black text-red-500 outline-none p-2 rounded-lg border border-red-500/20 w-full cursor-pointer">
                     <option value="accelerate">一致加速</option><option value="divergence">分歧转强</option><option value="broken">破位退潮</option><option value="revive">反包穿越</option>
                   </select>
@@ -1313,7 +1326,7 @@ const App = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6 pt-6">
             {history.map((h) => (
-              <div key={h.date} onClick={() => setReview(h)} className={`p-6 rounded-3xl border cursor-pointer transition-all hover:scale-[1.02] flex flex-col justify-between h-48 relative overflow-hidden ${review.date === h.date ? 'bg-red-600/10 border-red-500' : 'bg-white/[0.02] border-white/5 hover:border-white/10'}`}>
+              <div key={h.date} onClick={() => { if (isDirty) showToast('当前复盘有未归档修改', 'err'); setReview(h); setIsDirty(false); }} className={`p-6 rounded-3xl border cursor-pointer transition-all hover:scale-[1.02] flex flex-col justify-between h-48 relative overflow-hidden ${review.date === h.date ? 'bg-red-600/10 border-red-500' : 'bg-white/[0.02] border-white/5 hover:border-white/10'}`}>
                 <div className="flex justify-between items-start">
                   <span className="text-[10px] font-black text-gray-600">{h.date}</span>
                   <div className={`w-1.5 h-1.5 rounded-full ${h.score > 60 ? 'bg-red-500' : 'bg-emerald-500'}`}></div>
@@ -1361,7 +1374,7 @@ const App = () => {
                             {f.preview ? <img src={f.preview} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity" /> : <DatabaseZap size={20} className="text-indigo-400" />}
                           </div>
                           <p className="text-[11px] font-black text-gray-400 truncate flex-1 uppercase tracking-tighter">{f.name}</p>
-                          <button onClick={() => setUploadedFiles(prev => prev.filter((_, idx) => idx !== i))} className="w-6 h-6 bg-red-500/80 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg"><X size={12}/></button>
+                          <button onClick={() => { if (uploadedFiles[i].preview) URL.revokeObjectURL(uploadedFiles[i].preview!); setUploadedFiles(prev => prev.filter((_, idx) => idx !== i)); }} className="w-6 h-6 bg-red-500/80 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg"><X size={12}/></button>
                         </div>
                       ))}
                     </div>
@@ -1386,6 +1399,16 @@ const App = () => {
           onUpdatePositionPrice={updatePositionPrice} onClose={() => setShowTradeManager(false)}
         />
       )}
+
+      {/* Toast 通知系统 */}
+      <div className="fixed bottom-6 right-6 z-[999] flex flex-col gap-2 pointer-events-none">
+        {toasts.map(t => (
+          <div key={t.id} className={`px-5 py-3 rounded-xl text-xs font-black text-white shadow-2xl backdrop-blur-xl border pointer-events-auto
+            ${t.type === 'ok' ? 'bg-emerald-700/95 border-emerald-500/50' : t.type === 'err' ? 'bg-red-700/95 border-red-500/50' : 'bg-indigo-700/95 border-indigo-500/50'}`}>
+            {t.msg}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
