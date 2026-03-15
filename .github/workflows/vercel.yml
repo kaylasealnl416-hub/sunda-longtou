@@ -1,35 +1,12 @@
-# Vercel 自动部署
-name: Deploy to Vercel
+# Vercel 部署已改为 Vercel 控制台直接连接 GitHub 自动触发
+# 此 Action 已停用，保留仅作记录
+name: Deploy to Vercel (disabled)
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install npm
-        run: npm install -g npm
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Build
-        run: npm run build
-
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: team_u1r7x9EZ4NDhCmzEuiDwClV8
-          vercel-project-id: prj_twv0oX9iJoEPKY8A28E6uGPTeXaV
-          vercel-args: '--prod'
+      - run: echo "Vercel deployment is handled automatically via Vercel Git integration."
