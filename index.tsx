@@ -6,7 +6,7 @@ import {
   ArrowUpRight, Scale, Save, RefreshCcw, ArrowRight,
   ShieldAlert, Wand2, DatabaseZap, X, FileUp, Calendar, Timer, Waves,
   ChevronDown, MessageSquareCode, Radio, Cpu, Plus, TrendingDownIcon,
-  Wallet, Trash2, DollarSign, Percent, ArrowDownRight, Camera, Crosshair
+  Wallet, Trash2, DollarSign, Percent, ArrowDownRight, Camera, Crosshair, Settings, Eye, EyeOff
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { GoogleGenAI } from "@google/genai";
@@ -193,6 +193,55 @@ const safeStorage = {
       return defaultValue;
     }
   }
+};
+
+// ===== API 设置面板 =====
+const API_KEY_FIELDS = [
+  { key: 'ZHIPU_API_KEY',   label: '智谱 GLM',   placeholder: '填入智谱 API Key (open.bigmodel.cn)' },
+  { key: 'MINIMAX_API_KEY', label: 'MiniMax',    placeholder: '填入 MiniMax API Key (api.minimax.chat)' },
+  { key: 'QIANWEN_API_KEY', label: '千问 Qwen',  placeholder: '填入阿里云百炼 API Key (dashscope)' },
+  { key: 'GEMINI_API_KEY',  label: 'Gemini',     placeholder: '填入 Google Gemini API Key (aistudio.google.com)' },
+];
+
+const ApiSettingsPanel = ({ apiKeys, onSave, onClose }: {
+  apiKeys: Record<string, string>;
+  onSave: (keys: Record<string, string>) => void;
+  onClose: () => void;
+}) => {
+  const [draft, setDraft] = useState<Record<string, string>>({ ...apiKeys });
+  const [visible, setVisible] = useState<Record<string, boolean>>({});
+  return (
+    <div className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4">
+      <div className="w-full max-w-lg bg-[#0c0c10] border border-white/10 rounded-2xl p-6 relative">
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"><X size={18} /></button>
+        <h2 className="text-sm font-black text-white mb-1 flex items-center gap-2"><Settings size={14} className="text-gray-400" /> AI 引擎 API 设置</h2>
+        <p className="text-[10px] text-gray-500 mb-5">Key 保存在本地浏览器，不会上传到服务器。每个平台填一个即可使用对应引擎。</p>
+        <div className="flex flex-col gap-3">
+          {API_KEY_FIELDS.map(f => (
+            <div key={f.key}>
+              <label className="text-[10px] font-black text-gray-400 mb-1 block">{f.label}</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type={visible[f.key] ? 'text' : 'password'}
+                  value={draft[f.key] || ''}
+                  onChange={e => setDraft(prev => ({ ...prev, [f.key]: e.target.value }))}
+                  placeholder={f.placeholder}
+                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-[11px] text-gray-200 outline-none focus:border-white/30 placeholder-gray-600 font-mono"
+                />
+                <button onClick={() => setVisible(v => ({ ...v, [f.key]: !v[f.key] }))} className="text-gray-500 hover:text-gray-300 transition-colors">
+                  {visible[f.key] ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2 mt-6 justify-end">
+          <button onClick={onClose} className="px-4 py-2 text-[11px] font-black text-gray-500 hover:text-gray-300 transition-colors">取消</button>
+          <button onClick={() => onSave(draft)} className="px-5 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-[11px] font-black transition-all">保存</button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 // ===== 交易复盘中心组件 =====
@@ -432,6 +481,10 @@ const App = () => {
   const [showFileManager, setShowFileManager] = useState(false);
   const [showTradeManager, setShowTradeManager] = useState(false);
   const [aiProvider, setAiProvider] = useState<'gemini' | 'zhipu' | 'minimax' | 'qianwen'>('zhipu');
+  const [showSettings, setShowSettings] = useState(false);
+  const [apiKeys, setApiKeys] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem('dragon_faith_api_keys') || '{}'); } catch { return {}; }
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fileImportRef = useRef<HTMLInputElement>(null);
 
@@ -875,10 +928,12 @@ const App = () => {
     return match ? match[1].trim() : text.trim();
   };
 
+  const getKey = (name: string) => apiKeys[name] || import.meta.env[`VITE_${name}`] || '';
+
   const callAIProvider = async (prompt: string, files?: UploadedFile[]) => {
     if (aiProvider === 'zhipu') {
-      const apiKey = import.meta.env.VITE_ZHIPU_API_KEY;
-      if (!apiKey) throw new Error("智谱 API Key 未配置，请在 Vercel 控制台 → Settings → Environment Variables 添加 VITE_ZHIPU_API_KEY");
+      const apiKey = getKey('ZHIPU_API_KEY');
+      if (!apiKey) throw new Error("智谱 API Key 未设置，请点右上角「API 设置」填入");
       if (files && files.length > 0) {
         showToast('智谱不支持图片/文件附件，已忽略附件仅做文本分析', 'info');
       }
@@ -897,8 +952,8 @@ const App = () => {
       if (data.error) throw new Error(data.error.message);
       return stripMarkdownJson(data.choices?.[0]?.message?.content || "");
     } else if (aiProvider === 'minimax') {
-      const apiKey = import.meta.env.VITE_MINIMAX_API_KEY;
-      if (!apiKey) throw new Error("MiniMax API Key 未配置，请在 Vercel 控制台 → Settings → Environment Variables 添加 VITE_MINIMAX_API_KEY");
+      const apiKey = getKey('MINIMAX_API_KEY');
+      if (!apiKey) throw new Error("MiniMax API Key 未设置，请点右上角「API 设置」填入");
       if (files && files.length > 0) showToast('MiniMax 不支持图片/文件附件，已忽略附件仅做文本分析', 'info');
       const response = await fetch('https://api.minimax.chat/v1/text/chatcompletion_v2', {
         method: 'POST',
@@ -915,8 +970,8 @@ const App = () => {
       if (data.base_resp?.status_code && data.base_resp.status_code !== 0) throw new Error(data.base_resp.status_msg);
       return stripMarkdownJson(data.choices?.[0]?.message?.content || "");
     } else if (aiProvider === 'qianwen') {
-      const apiKey = import.meta.env.VITE_QIANWEN_API_KEY;
-      if (!apiKey) throw new Error("千问 API Key 未配置，请在 Vercel 控制台 → Settings → Environment Variables 添加 VITE_QIANWEN_API_KEY");
+      const apiKey = getKey('QIANWEN_API_KEY');
+      if (!apiKey) throw new Error("千问 API Key 未设置，请点右上角「API 设置」填入");
       if (files && files.length > 0) showToast('千问不支持图片/文件附件，已忽略附件仅做文本分析', 'info');
       const response = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
         method: 'POST',
@@ -933,8 +988,8 @@ const App = () => {
       if (data.error) throw new Error(data.error.message);
       return stripMarkdownJson(data.choices?.[0]?.message?.content || "");
     } else {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_API_KEY;
-      if (!apiKey) throw new Error("Gemini API Key 未配置，请在 Vercel 控制台 → Settings → Environment Variables 添加 VITE_GEMINI_API_KEY");
+      const apiKey = getKey('GEMINI_API_KEY') || getKey('API_KEY');
+      if (!apiKey) throw new Error("Gemini API Key 未设置，请点右上角「API 设置」填入");
       const ai = new GoogleGenAI({ apiKey });
       const config = { responseMimeType: "text/plain", systemInstruction: STOCK_TRADER_PERSONA };
       if (files && files.length > 0) {
@@ -1074,6 +1129,9 @@ const App = () => {
             <input type="date" value={review.date} onChange={e => { setReview({...review, date: e.target.value}); setIsDirty(true); }} className="bg-transparent border-none text-[11px] font-black outline-none text-gray-300" />
           </div>
           <div className="flex gap-2">
+            <button onClick={() => setShowSettings(true)} className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[11px] font-black flex items-center gap-2 transition-all">
+              <Settings size={14} /> API 设置
+            </button>
             <button onClick={() => setShowFileManager(true)} className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[11px] font-black flex items-center gap-2 transition-all">
               <FileUp size={14} /> 信源库
             </button>
@@ -1450,6 +1508,20 @@ const App = () => {
           currentDate={review.date}
           onAddTrade={addTrade} onAddPosition={addPosition} onDeleteTrade={deleteTrade}
           onUpdatePositionPrice={updatePositionPrice} onClose={() => setShowTradeManager(false)}
+        />
+      )}
+
+      {/* API 设置面板 */}
+      {showSettings && (
+        <ApiSettingsPanel
+          apiKeys={apiKeys}
+          onSave={(keys) => {
+            setApiKeys(keys);
+            localStorage.setItem('dragon_faith_api_keys', JSON.stringify(keys));
+            setShowSettings(false);
+            showToast('API Key 已保存', 'ok');
+          }}
+          onClose={() => setShowSettings(false)}
         />
       )}
 
