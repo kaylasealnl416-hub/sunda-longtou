@@ -431,7 +431,7 @@ const App = () => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [showFileManager, setShowFileManager] = useState(false);
   const [showTradeManager, setShowTradeManager] = useState(false);
-  const [aiProvider, setAiProvider] = useState<'gemini' | 'zhipu'>('zhipu');
+  const [aiProvider, setAiProvider] = useState<'gemini' | 'zhipu' | 'minimax' | 'qianwen'>('zhipu');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fileImportRef = useRef<HTMLInputElement>(null);
 
@@ -869,10 +869,19 @@ const App = () => {
     });
   };
 
+  // 剥离 AI 回包中的 markdown 代码块包装，提升 JSON.parse 容错率
+  const stripMarkdownJson = (text: string): string => {
+    const match = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    return match ? match[1].trim() : text.trim();
+  };
+
   const callAIProvider = async (prompt: string, files?: UploadedFile[]) => {
     if (aiProvider === 'zhipu') {
       const apiKey = import.meta.env.VITE_ZHIPU_API_KEY;
-      if (!apiKey) throw new Error("环境变量 VITE_ZHIPU_API_KEY 未设置");
+      if (!apiKey) throw new Error("智谱 API Key 未配置，请在 Vercel 控制台 → Settings → Environment Variables 添加 VITE_ZHIPU_API_KEY");
+      if (files && files.length > 0) {
+        showToast('智谱不支持图片/文件附件，已忽略附件仅做文本分析', 'info');
+      }
       const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
@@ -886,20 +895,56 @@ const App = () => {
       });
       const data = await response.json();
       if (data.error) throw new Error(data.error.message);
-      return data.choices?.[0]?.message?.content || "";
+      return stripMarkdownJson(data.choices?.[0]?.message?.content || "");
+    } else if (aiProvider === 'minimax') {
+      const apiKey = import.meta.env.VITE_MINIMAX_API_KEY;
+      if (!apiKey) throw new Error("MiniMax API Key 未配置，请在 Vercel 控制台 → Settings → Environment Variables 添加 VITE_MINIMAX_API_KEY");
+      if (files && files.length > 0) showToast('MiniMax 不支持图片/文件附件，已忽略附件仅做文本分析', 'info');
+      const response = await fetch('https://api.minimax.chat/v1/text/chatcompletion_v2', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model: "MiniMax-Text-01",
+          messages: [
+            { role: "system", content: STOCK_TRADER_PERSONA },
+            { role: "user", content: prompt }
+          ]
+        })
+      });
+      const data = await response.json();
+      if (data.base_resp?.status_code && data.base_resp.status_code !== 0) throw new Error(data.base_resp.status_msg);
+      return stripMarkdownJson(data.choices?.[0]?.message?.content || "");
+    } else if (aiProvider === 'qianwen') {
+      const apiKey = import.meta.env.VITE_QIANWEN_API_KEY;
+      if (!apiKey) throw new Error("千问 API Key 未配置，请在 Vercel 控制台 → Settings → Environment Variables 添加 VITE_QIANWEN_API_KEY");
+      if (files && files.length > 0) showToast('千问不支持图片/文件附件，已忽略附件仅做文本分析', 'info');
+      const response = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model: "qwen-turbo",
+          messages: [
+            { role: "system", content: STOCK_TRADER_PERSONA },
+            { role: "user", content: prompt }
+          ]
+        })
+      });
+      const data = await response.json();
+      if (data.error) throw new Error(data.error.message);
+      return stripMarkdownJson(data.choices?.[0]?.message?.content || "");
     } else {
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_API_KEY;
-      if (!apiKey) throw new Error("环境变量 VITE_GEMINI_API_KEY 未设置");
+      if (!apiKey) throw new Error("Gemini API Key 未配置，请在 Vercel 控制台 → Settings → Environment Variables 添加 VITE_GEMINI_API_KEY");
       const ai = new GoogleGenAI({ apiKey });
       const config = { responseMimeType: "text/plain", systemInstruction: STOCK_TRADER_PERSONA };
       if (files && files.length > 0) {
         const parts: any[] = [{ text: prompt }];
         files.forEach(file => parts.push({ inlineData: { mimeType: file.mimeType, data: file.data } }));
         const response = await ai.models.generateContent({ model: "gemini-2.0-flash", contents: { parts }, config });
-        return response.text || "";
+        return stripMarkdownJson(response.text || "");
       } else {
         const response = await ai.models.generateContent({ model: "gemini-2.0-flash", contents: prompt, config });
-        return response.text || "";
+        return stripMarkdownJson(response.text || "");
       }
     }
   };
@@ -1041,11 +1086,19 @@ const App = () => {
             <button onClick={() => setShowTradeManager(true)} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[11px] font-black shadow-lg shadow-emerald-600/30 flex items-center gap-2 transition-all">
               <Wallet size={14} /> 交易中心
             </button>
-            <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
-              <span className="text-[9px] font-black text-gray-500 uppercase">AI 盘手引擎:</span>
-              <button onClick={() => setAiProvider(aiProvider === 'gemini' ? 'zhipu' : 'gemini')} className={`px-2 py-1 rounded-lg text-[10px] font-black transition-all ${aiProvider === 'gemini' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'}`}>
-                {aiProvider === 'gemini' ? 'Gemini 2.0' : '智谱 GLM-4'}
-              </button>
+            <div className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
+              <span className="text-[9px] font-black text-gray-500 uppercase mr-1">AI引擎:</span>
+              {([
+                { id: 'zhipu',   label: '智谱', color: 'bg-purple-500/20 text-purple-400 border-purple-500/40' },
+                { id: 'minimax', label: 'MiniMax', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40' },
+                { id: 'qianwen', label: '千问', color: 'bg-orange-500/20 text-orange-400 border-orange-500/40' },
+                { id: 'gemini',  label: 'Gemini', color: 'bg-blue-500/20 text-blue-400 border-blue-500/40' },
+              ] as const).map(p => (
+                <button key={p.id} onClick={() => setAiProvider(p.id)}
+                  className={`px-2 py-0.5 rounded-lg text-[10px] font-black border transition-all ${aiProvider === p.id ? p.color : 'bg-transparent text-gray-600 border-transparent hover:text-gray-400'}`}>
+                  {p.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
