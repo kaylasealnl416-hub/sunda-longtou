@@ -2,5 +2,6 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm install --legacy-peer-deps",
-  "framework": "vite"
+  "framework": "vite",
+  "ignoreCommand": "[ \"$VERCEL_GIT_COMMIT_REF\" != \"main\" ] && exit 1 || exit 0"
 }
