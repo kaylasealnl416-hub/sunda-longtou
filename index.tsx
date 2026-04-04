@@ -17,6 +17,10 @@ import {
 } from 'recharts';
 
 // --- Types & Constants ---
+// 后端 API 地址，开发时指向本地 news-stock-monitor 服务
+const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL)
+  || 'http://localhost:8000';
+
 const STORAGE_KEY = 'dragon_faith_system_v32_0';
 const TRADE_STORAGE_KEY = 'dragon_faith_trades_v1';
 const POSITION_STORAGE_KEY = 'dragon_faith_positions_v1';
@@ -824,10 +828,194 @@ const App = () => {
     return result;
   };
 
+  // ─────────────────── 后端 API 数据获取 ───────────────────
+
+  /**
+   * 将后端 ladder 格式转换为前端 MarketReview['ladder'] 格式
+   * 后端: {"1": ["600519(贵州茅台)", ...], "2": [...]}
+   * 前端: {"1": {count, stock, concept, promoRate}, ...}
+   */
+  const transformLadder = (
+    backendLadder: Record<string, string[]>
+  ): MarketReview['ladder'] => {
+    const result: MarketReview['ladder'] = {
+      '5+': { count: 0, stock: '', concept: '', promoRate: 0 },
+      '5': { count: 0, stock: '', concept: '', promoRate: 0 },
+      '4': { count: 0, stock: '', concept: '', promoRate: 0 },
+      '3': { count: 0, stock: '', concept: '', promoRate: 0 },
+      '2': { count: 0, stock: '', concept: '', promoRate: 0 },
+      '1': { count: 0, stock: '', concept: '', promoRate: 0 },
+    };
+    for (const [tier, stocks] of Object.entries(backendLadder)) {
+      const tierNum = parseInt(tier);
+      // 5板及以上合并为 "5+" key，5板单独也保留
+      const key = tierNum >= 6 ? '5+' : String(tierNum);
+      if (!result[key]) {
+        result[key] = { count: 0, stock: '', concept: '', promoRate: 0 };
+      }
+      result[key].count += stocks.length;
+      // 取第一只股票的中文名（格式 "600519(贵州茅台)"）
+      if (!result[key].stock && stocks[0]) {
+        result[key].stock = stocks[0].match(/\((.+)\)/)?.[1] || stocks[0];
+      }
+    }
+    return result;
+  };
+
+  /**
+   * 从后端并发拉取当日市场数据，合并为 Partial<MarketReview>
+   * 任意子接口失败不影响其他字段
+   */
+  const fetchMarketData = async (date: string): Promise<Partial<MarketReview>> => {
+    const base = `${API_BASE_URL}/api/market`;
+    const result: Partial<MarketReview> = {};
+
+    // 带超时和状态码检查的 fetch 封装
+    const fetchJson = async (url: string) => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000); // 8秒超时
+      try {
+        const r = await fetch(url, { signal: controller.signal });
+        if (!r.ok) return null; // 非 200 返回 null，不影响其他接口
+        return await r.json();
+      } finally {
+        clearTimeout(timeout);
+      }
+    };
+
+    const [summaryRes, emotionRes, ladderRes, sectorsRes, indicesRes] = await Promise.allSettled([
+      fetchJson(`${base}/summary/${date}`),
+      fetchJson(`${base}/emotion/${date}`),
+      fetchJson(`${base}/ladder/${date}`),
+      fetchJson(`${base}/sectors/${date}`),
+      fetchJson(`${base}/indices/${date}`),
+    ]);
+
+    // summary → limitUpTotal / limitDownTotal / upDownCount / totalVol
+    if (summaryRes.status === 'fulfilled' && summaryRes.value?.zt_count !== undefined) {
+      const d = summaryRes.value;
+      result.limitUpTotal = d.zt_count ?? 0;
+      result.limitDownTotal = d.dt_count ?? 0;
+      result.upDownCount = { up: d.up_count ?? 0, down: d.down_count ?? 0 };
+      if (d.total_amount) {
+        result.totalVol = Math.round(d.total_amount * 100) / 100; // 已经是亿为单位
+      }
+    }
+
+    // emotion → stage / score
+    if (emotionRes.status === 'fulfilled' && emotionRes.value?.stage) {
+      const d = emotionRes.value;
+      result.stage = d.stage ?? '待研判';
+    }
+
+    // ladder → 转换格式后写入 ladder 字段
+    if (ladderRes.status === 'fulfilled' && ladderRes.value?.ladder) {
+      result.ladder = transformLadder(ladderRes.value.ladder);
+      // 炸板率从 ladder 接口获取
+      if (ladderRes.value.zhaban_rate !== undefined) {
+        result.brokenRate = ladderRes.value.zhaban_rate;
+      }
+    }
+
+    // sectors → topSectors
+    if (sectorsRes.status === 'fulfilled' && sectorsRes.value?.sectors) {
+      result.topSectors = (sectorsRes.value.sectors as any[]).slice(0, 3).map((s: any) => ({
+        name: s['名称'] || s.name || '',
+        gain: parseFloat(s['涨幅%'] || s.gain) || 0,
+        limitUps: parseInt(s['涨停数'] || s.limit_ups) || 0,
+        volume: Math.round((parseFloat(s['总金额'] || s.volume) || 0) / 10000),
+      }));
+    }
+
+    // indices → indices
+    if (indicesRes.status === 'fulfilled' && indicesRes.value?.indices) {
+      const indexKeys = [
+        { key: '上证指数', display: '上证' }, { key: '深证成指', display: '深成' },
+        { key: '创业板指', display: '创业' }, { key: '科创50', display: '科创' },
+        { key: '沪深300', display: '沪深300' }, { key: '中证1000', display: '中证1000' },
+        { key: '中证2000', display: '中证2000' }, { key: '微盘股', display: '微盘股' },
+      ];
+      const rawIndices = indicesRes.value.indices as any[];
+      result.indices = indexKeys.map(({ key, display }) => {
+        const match = rawIndices.find((r: any) => {
+          const name = r['名称'] || r.name || '';
+          return name === key || name.includes(key) || key.includes(name);
+        });
+        return {
+          name: display,
+          value: match ? Math.round(parseFloat(match['现价'] || match.value) || 0) : 0,
+          change: match ? parseFloat(match['涨幅%'] || match.change) || 0 : 0,
+          ma5Status: 'above' as const,
+        };
+      });
+    }
+
+    return result;
+  };
+
+  /**
+   * 合并后端数据到当前 review
+   * 规则：后端值非空 且 前端字段为初始空值时才覆盖（不覆盖用户手工输入）
+   */
+  const mergeMarketData = (
+    prev: MarketReview,
+    incoming: Partial<MarketReview>
+  ): MarketReview => {
+    const merged = { ...prev };
+    for (const [k, v] of Object.entries(incoming)) {
+      const key = k as keyof MarketReview;
+      const prevVal = prev[key];
+      // 判断前端字段是否为"初始空值"：0 / '' / null / undefined / 空对象 / 全零对象 / 全空数组
+      let isEmpty =
+        prevVal === 0 || prevVal === '' || prevVal == null ||
+        (typeof prevVal === 'object' && !Array.isArray(prevVal) && Object.keys(prevVal as object).length === 0) ||
+        (Array.isArray(prevVal) && prevVal.length === 0);
+      // upDownCount {up:0, down:0} 视为空
+      if (!isEmpty && key === 'upDownCount' && typeof prevVal === 'object') {
+        const ud = prevVal as { up: number; down: number };
+        isEmpty = ud.up === 0 && ud.down === 0;
+      }
+      // topSectors 全部 name 为空视为空
+      if (!isEmpty && key === 'topSectors' && Array.isArray(prevVal)) {
+        isEmpty = (prevVal as SectorTrack[]).every(s => !s.name);
+      }
+      // ladder 全部 count 为 0 视为空
+      if (!isEmpty && key === 'ladder' && typeof prevVal === 'object' && !Array.isArray(prevVal)) {
+        isEmpty = Object.values(prevVal as Record<string, any>).every(v => v.count === 0 && !v.stock);
+      }
+      // indices 全部 value 为 0 视为空
+      if (!isEmpty && key === 'indices' && Array.isArray(prevVal)) {
+        isEmpty = (prevVal as IndexData[]).every(idx => idx.value === 0 && idx.change === 0);
+      }
+      if (isEmpty && v !== undefined && v !== null) {
+        (merged as any)[key] = v;
+      }
+    }
+    return merged;
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
     const newFiles: UploadedFile[] = [];
+
+    // 同时上传到后端（不阻塞本地解析）
+    const fileArray = Array.from(files) as File[];
+    const excelFilesForUpload = fileArray.filter(f => f.name.endsWith('.xlsx') || f.name.endsWith('.xls'));
+    if (excelFilesForUpload.length > 0) {
+      const formData = new FormData();
+      excelFilesForUpload.forEach(f => formData.append('files', f));
+      fetch(`${API_BASE_URL}/api/upload`, { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(json => {
+          console.log('[后端上传结果]', json);
+          if (json.uploaded?.length > 0) showToast(`后端入库成功: ${json.uploaded.length} 个文件`, 'ok');
+          if (json.failed?.length > 0) showToast(`后端入库失败: ${json.failed.map((f: any) => f.filename).join(', ')}`, 'err');
+        })
+        .catch(err => console.warn('[后端上传失败，降级为本地模式]', err));
+    }
+
+    // 本地解析逻辑保持不变
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
@@ -1006,7 +1194,31 @@ const App = () => {
 
   const autoFillMarketData = async () => {
     if (isLoading || uploadedFiles.length === 0) return;
-    setIsLoading(true); setStatusMsg("正在解析Excel数据...");
+    setIsLoading(true); setStatusMsg("正在从后端获取市场数据...");
+
+    // 从文件名提取日期（YYYYMMDD），用于后端 API 查询
+    const dateMatch = uploadedFiles.map(f => f.name.match(/(\d{8})/)).find(m => m);
+    const tradeDate = dateMatch ? dateMatch[1] : review.date.replace(/-/g, '');
+
+    // 优先尝试后端 API
+    try {
+      const marketData = await fetchMarketData(tradeDate);
+      if (Object.keys(marketData).length > 0) {
+        const ladder = marketData.ladder || {};
+        const dragonStock = ladder['5+']?.stock || ladder['5']?.stock || ladder['4']?.stock || ladder['3']?.stock || ladder['2']?.stock || ladder['1']?.stock || '';
+        setReview(prev => ({
+          ...mergeMarketData(prev, marketData),
+          dragon: dragonStock || prev.dragon,
+          aiAnalysis: `✅ 后端数据同步完成！\n- 涨停数: ${marketData.limitUpTotal ?? '?'}家\n- 跌停数: ${marketData.limitDownTotal ?? '?'}家\n- 上涨家数: ${marketData.upDownCount?.up ?? '?'}家\n- 下跌家数: ${marketData.upDownCount?.down ?? '?'}家\n- 炸板率: ${marketData.brokenRate ?? '?'}%\n- 情绪阶段: ${marketData.stage ?? '待研判'}\n\n请手动补充或确认梯队核心，随后启动盘手研判。`,
+        }));
+        setShowFileManager(false); setIsLoading(false); return;
+      }
+    } catch (err) {
+      console.warn('[后端API失败，降级为本地解析]', err);
+    }
+
+    // 后端无数据或失败 → 降级为本地 Excel 解析（原有逻辑）
+    setStatusMsg("后端无数据，正在本地解析Excel...");
     const excelFiles = uploadedFiles.filter(f => f.mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || f.name.endsWith('.xlsx') || f.name.endsWith('.xls'));
     if (excelFiles.length > 0 && excelFiles[0]?.data) {
       try {
